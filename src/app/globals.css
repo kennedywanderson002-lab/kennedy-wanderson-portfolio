@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --font-serif: var(--font-cormorant), "Times New Roman", Garamond, serif;
+  --font-sans: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  --bg-main: #FFFFFF;
+  --bg-subtle: #FAF9F6;
+  --bg-overlay: #F4F2EE;
+  
+  --border-hairline: #E5E1DA;
+  --border-input: #D2CBC3;
+  --border-focus: #1C1A18;
+  
+  --text-main: #181716;
+  --text-muted: #6B6660;
+  --text-light: #9C968F;
+  
+  --accent-gold: #9E8765;
+}
+
+@theme {
+  --font-serif: var(--font-cormorant), Georgia, serif;
+  --font-sans: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --color-main: #FFFFFF;
+  --color-subtle: #FAF9F6;
+  --color-overlay: #F4F2EE;
+  --color-charcoal: #181716;
+  --color-muted: #6B6660;
+  --color-light: #9C968F;
+  --color-gold: #9E8765;
+  --color-hairline: #E5E1DA;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #FFFFFF;
+  color: #181716;
+  font-family: var(--font-sans);
+}
+
+body {
+  background-color: #FFFFFF;
+  color: #181716;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: #EDE7DF;
+  color: #181716;
+}
+
+/* Fine Art Typography Classes */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+/* Minimalist tracking */
+.tracking-editorial {
+  letter-spacing: 0.28em;
+}
+
+.tracking-wide-caps {
+  letter-spacing: 0.2em;
+}
+
+/* Minimalist Underline Input */
+.input-minimal-underline {
+  border-bottom: 1px solid var(--border-input);
+  background: transparent;
+  padding: 0.85rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: #181716;
+  transition: border-color 0.3s ease;
+  width: 100%;
+}
+
+.input-minimal-underline:focus {
+  outline: none;
+  border-bottom-color: var(--border-focus);
+}
+
+.input-minimal-underline::placeholder {
+  color: #A8A29A;
+  font-weight: 300;
+}
+
+/* Clean Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFFFFF;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E0DBD3;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9E8765;
+}
