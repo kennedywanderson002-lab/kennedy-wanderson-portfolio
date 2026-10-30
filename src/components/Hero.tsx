@@ -84,17 +84,17 @@ export function Hero() {
   };
 
   return (
-    <section id="home" className="relative w-full h-screen overflow-hidden bg-[#141312]">
+    <section id="home" className="relative w-full h-screen h-[100dvh] overflow-hidden bg-[#141312]">
       {/* Slides with Smooth Crossfade */}
       {heroSlides.map((slide, idx) => (
         <div
           key={slide.image}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+          className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
             idx === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
           }`}
         >
-          {/* Ambient Full-Bleed Background (Fills 100% of the screen with glowing atmosphere) */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Ambient Full-Bleed Background (Fills 100% of the screen with glowing atmosphere on Desktop) */}
+          <div className="hidden md:block absolute inset-0 overflow-hidden pointer-events-none">
             <Image
               src={slide.image}
               alt=""
@@ -108,7 +108,7 @@ export function Hero() {
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
-          {/* Masterpiece Foreground Image: Preserves the greater part of the body without ANY cropping */}
+          {/* Main Hero Image: Fills 100% of the screen on mobile (object-cover), preserves full body on desktop (md:object-contain) */}
           <div className="relative z-10 w-full h-full flex items-center justify-center p-0">
             <Image
               src={slide.image}
@@ -116,7 +116,7 @@ export function Hero() {
               fill
               sizes="100vw"
               priority={idx === 0}
-              className="object-contain object-center filter brightness-[0.98] transition-transform duration-1000 ease-out drop-shadow-2xl"
+              className={`w-full h-full object-cover md:object-contain ${slide.objectPosition || "object-top"} filter brightness-[0.94] md:brightness-[0.98] transition-transform duration-1000 ease-out`}
               quality={90}
             />
           </div>
