@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 
 export function AboutSection() {
@@ -18,105 +17,94 @@ export function AboutSection() {
 
   return (
     <section id="about" className="py-28 sm:py-36 bg-[#FAF9F6] border-t border-[#EFECE6]">
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
+      <div className="max-w-6xl mx-auto px-6 sm:px-10 lg:px-16">
         
-        {/* Asymmetric Two-Column Editorial Layout (Jose Villa Style) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
-          
-          {/* Photographer Portrait (Pure & Borderless) */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative aspect-[3/4] w-full max-w-md mx-auto lg:max-w-none overflow-hidden bg-white">
-              <Image
-                src="/images/kennedy-wanderson.jpg"
-                alt="Portrait of Photographer Kennedy Wanderson"
-                fill
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover object-top filter brightness-[0.98]"
-                quality={90}
-              />
-            </div>
-            <div className="text-center mt-4">
-              <p className="font-serif text-lg font-light text-[#181716]">
-                Kennedy Wanderson
-              </p>
-              <p className="text-[9px] uppercase tracking-[0.35em] text-[#8C8780] font-sans mt-0.5">
-                France · Worldwide
-              </p>
-            </div>
-          </div>
-
-          {/* Biography & Vision */}
-          <div className="lg:col-span-7 flex flex-col justify-center">
-            <p className="text-[9px] sm:text-[10px] font-sans uppercase tracking-[0.4em] font-medium text-[#8C8780] mb-4">
+        {/* Editorial Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-24">
+          <div className="inline-flex items-center space-x-3 mb-4">
+            <span className="w-8 h-[1px] bg-[#C5BDB2]" />
+            <p className="text-[9px] sm:text-[10px] font-sans uppercase tracking-[0.4em] font-medium text-[#8C8780]">
               {t.about.tagline}
             </p>
-            
-            <h2 className="font-serif italic text-3xl sm:text-5xl font-light text-[#181716] leading-[1.25] mb-8">
-              {t.about.subtitle}
-            </h2>
+            <span className="w-8 h-[1px] bg-[#C5BDB2]" />
+          </div>
 
-            {/* Narrative Paragraphs */}
-            <div className="space-y-6 text-xs sm:text-sm font-light text-[#59534B] leading-[1.85] max-w-xl">
-              <p>{t.about.paragraph1}</p>
-              <p>{t.about.paragraph2}</p>
-              <p>{t.about.paragraph3}</p>
-            </div>
+          <h2 className="font-serif italic text-3xl sm:text-5xl lg:text-6xl font-light text-[#181716] leading-[1.2] mb-6">
+            {t.about.subtitle}
+          </h2>
 
-            {/* Quote */}
-            <div className="mt-10 pt-8 border-t border-[#EAE6DE] max-w-lg">
-              <p className="font-serif italic text-xl sm:text-2xl text-[#181716] leading-relaxed">
-                &ldquo;{t.about.quote}&rdquo;
-              </p>
-              <p className="text-[10px] uppercase tracking-[0.3em] font-sans text-[#8C8780] mt-3">
-                — {t.about.quoteAuthor}
-              </p>
-            </div>
+          <div className="flex items-center justify-center space-x-2 text-[10px] uppercase tracking-[0.35em] text-[#9E8765] font-sans">
+            <span>Kennedy Wanderson</span>
+            <span>·</span>
+            <span>France & Worldwide</span>
+          </div>
+        </div>
 
-            {/* Subtle Career Milestones (Numbers in Airy Layout) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-12 pt-8 border-t border-[#EAE6DE]">
-              <div>
-                <p className="font-serif text-3xl font-light text-[#181716]">
-                  {t.about.stats.weddings}
-                </p>
-                <p className="text-[9px] uppercase tracking-[0.25em] text-[#8C8780] font-sans mt-1">
-                  {t.about.stats.weddingsLabel}
-                </p>
-              </div>
-              <div>
-                <p className="font-serif text-3xl font-light text-[#181716]">
-                  {t.about.stats.countries}
-                </p>
-                <p className="text-[9px] uppercase tracking-[0.25em] text-[#8C8780] font-sans mt-1">
-                  {t.about.stats.countriesLabel}
-                </p>
-              </div>
-              <div>
-                <p className="font-serif text-3xl font-light text-[#181716]">
-                  {t.about.stats.experience}
-                </p>
-                <p className="text-[9px] uppercase tracking-[0.25em] text-[#8C8780] font-sans mt-1">
-                  {t.about.stats.experienceLabel}
-                </p>
-              </div>
-              <div>
-                <p className="font-serif text-3xl font-light text-[#181716]">
-                  {t.about.stats.publications}
-                </p>
-                <p className="text-[9px] uppercase tracking-[0.25em] text-[#8C8780] font-sans mt-1">
-                  {t.about.stats.publicationsLabel}
-                </p>
-              </div>
-            </div>
+        {/* Two-Column Editorial Philosophy & Narrative */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start mb-20">
+          
+          {/* Left Column: Prominent Editorial Pull-Quote */}
+          <div className="lg:col-span-5 border-l-2 border-[#181716] pl-6 sm:pl-8 py-2">
+            <p className="font-serif italic text-2xl sm:text-3xl text-[#181716] leading-[1.4] font-light">
+              &ldquo;{t.about.quote}&rdquo;
+            </p>
+            <p className="text-[10px] uppercase tracking-[0.3em] font-sans text-[#8C8780] mt-6">
+              — {t.about.quoteAuthor}
+            </p>
+          </div>
 
+          {/* Right Column: Narrative Biography */}
+          <div className="lg:col-span-7 space-y-6 text-sm sm:text-base font-light text-[#59534B] leading-[1.9]">
+            <p className="first-letter:text-4xl first-letter:font-serif first-letter:float-left first-letter:mr-3 first-letter:leading-none first-letter:text-[#181716]">
+              {t.about.paragraph1}
+            </p>
+            <p>{t.about.paragraph2}</p>
+            <p>{t.about.paragraph3}</p>
+          </div>
+        </div>
+
+        {/* Subtle Career Milestones (Airy Layout) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 py-12 border-y border-[#EAE6DE]">
+          <div className="text-center sm:text-left">
+            <p className="font-serif text-3xl sm:text-4xl font-light text-[#181716]">
+              {t.about.stats.weddings}
+            </p>
+            <p className="text-[9px] uppercase tracking-[0.25em] text-[#8C8780] font-sans mt-2">
+              {t.about.stats.weddingsLabel}
+            </p>
+          </div>
+          <div className="text-center sm:text-left">
+            <p className="font-serif text-3xl sm:text-4xl font-light text-[#181716]">
+              {t.about.stats.countries}
+            </p>
+            <p className="text-[9px] uppercase tracking-[0.25em] text-[#8C8780] font-sans mt-2">
+              {t.about.stats.countriesLabel}
+            </p>
+          </div>
+          <div className="text-center sm:text-left">
+            <p className="font-serif text-3xl sm:text-4xl font-light text-[#181716]">
+              {t.about.stats.experience}
+            </p>
+            <p className="text-[9px] uppercase tracking-[0.25em] text-[#8C8780] font-sans mt-2">
+              {t.about.stats.experienceLabel}
+            </p>
+          </div>
+          <div className="text-center sm:text-left">
+            <p className="font-serif text-3xl sm:text-4xl font-light text-[#181716]">
+              {t.about.stats.publications}
+            </p>
+            <p className="text-[9px] uppercase tracking-[0.25em] text-[#8C8780] font-sans mt-2">
+              {t.about.stats.publicationsLabel}
+            </p>
           </div>
         </div>
 
         {/* Featured Publications Strip */}
-        <div className="mt-24 pt-14 border-t border-[#EAE6DE] text-center">
+        <div className="mt-16 text-center">
           <p className="text-[9px] uppercase tracking-[0.35em] text-[#9C968F] font-sans font-medium mb-8">
             {t.about.featuredIn}
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-70">
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-75">
             {publications.map((pub) => (
               <span
                 key={pub}

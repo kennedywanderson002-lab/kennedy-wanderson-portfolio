@@ -149,13 +149,6 @@ export function Navbar() {
               {t.nav.about}
             </Link>
             <Link
-              href="#testimonials"
-              onClick={() => setMenuOpen(false)}
-              className="font-serif italic text-3xl sm:text-5xl md:text-6xl text-[#181716] hover:text-[#9E8765] transition-all duration-300 hover:translate-x-2"
-            >
-              {t.nav.experience}
-            </Link>
-            <Link
               href="#contact"
               onClick={() => setMenuOpen(false)}
               className="font-serif italic text-3xl sm:text-5xl md:text-6xl text-[#181716] hover:text-[#9E8765] transition-all duration-300 hover:translate-x-2"

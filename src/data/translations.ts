@@ -5,7 +5,6 @@ export interface Translations {
     home: string;
     portfolio: string;
     about: string;
-    experience: string;
     contact: string;
     mentions: string;
     inquireNow: string;
@@ -53,17 +52,6 @@ export interface Translations {
       publicationsLabel: string;
     };
     featuredIn: string;
-  };
-  testimonials: {
-    tagline: string;
-    title: string;
-    subtitle: string;
-    items: Array<{
-      quote: string;
-      couple: string;
-      location: string;
-      date: string;
-    }>;
   };
   contact: {
     tagline: string;
@@ -124,7 +112,6 @@ export const translations: Record<Locale, Translations> = {
       home: "Accueil",
       portfolio: "Portfolio",
       about: "À Propos",
-      experience: "L'Expérience",
       contact: "Contact & Devis",
       mentions: "Mentions Légales",
       inquireNow: "Réserver Votre Date",
@@ -172,31 +159,6 @@ export const translations: Record<Locale, Translations> = {
         publicationsLabel: "Parutions Internationales",
       },
       featuredIn: "Publié et Reconnu Par",
-    },
-    testimonials: {
-      tagline: "TÉMOIGNAGES",
-      title: "Mots de Nos Mariés",
-      subtitle: "La plus belle récompense est la joie intemporelle de ceux qui nous confient leur histoire.",
-      items: [
-        {
-          quote: "Kennedy a su capter la poésie et l'intensité de notre mariage au Château de Champlâtreux avec une délicatesse inouïe. Chaque image ressemble à un tableau de maître.",
-          couple: "Camille & Alexandre",
-          location: "Château de Champlâtreux, France",
-          date: "Juin 2025",
-        },
-        {
-          quote: "Travailler avec Kennedy a été le point culminant de notre célébration au Lac de Côme. Sa présence discrète et son œil pour la lumière ont créé des souvenirs que nous chérirons pour toujours.",
-          couple: "Elena & Marcus",
-          location: "Villa Balbianello, Italie",
-          date: "Septembre 2025",
-        },
-        {
-          quote: "La sensibilité de Kennedy et sa maîtrise de l'argentique ont immortalisé notre union à Trancoso d'une façon à la fois moderne, émouvante et ultra-élégante.",
-          couple: "Mariana & Lucas",
-          location: "Trancoso, Brésil",
-          date: "Décembre 2024",
-        },
-      ],
     },
     contact: {
       tagline: "COMMENCER VOTRE HISTOIRE",
@@ -267,7 +229,6 @@ export const translations: Record<Locale, Translations> = {
       home: "Home",
       portfolio: "Portfolio",
       about: "About",
-      experience: "Experience",
       contact: "Inquire & Booking",
       mentions: "Legal Notice",
       inquireNow: "Reserve Your Date",
@@ -315,31 +276,6 @@ export const translations: Record<Locale, Translations> = {
         publicationsLabel: "International Features",
       },
       featuredIn: "Featured & Acclaimed By",
-    },
-    testimonials: {
-      tagline: "KIND WORDS",
-      title: "Love Stories Remembered",
-      subtitle: "The most meaningful measure of our work is the enduring affection of our couples.",
-      items: [
-        {
-          quote: "Kennedy captured our wedding at Château de Champlâtreux with breathtaking artistry. Looking at our photos feels like stepping into a romantic Parisian painting.",
-          couple: "Camille & Alexandre",
-          location: "Château de Champlâtreux, France",
-          date: "June 2025",
-        },
-        {
-          quote: "Working with Kennedy was the highlight of our Lake Como destination wedding. His calm spirit and extraordinary eye for light turned our celebration into heirloom art.",
-          couple: "Elena & Marcus",
-          location: "Villa Balbianello, Italy",
-          date: "September 2025",
-        },
-        {
-          quote: "His film aesthetic and organic approach preserved our celebration in Brazil in a way that feels effortless, modern, and profoundly emotional.",
-          couple: "Mariana & Lucas",
-          location: "Trancoso, Brazil",
-          date: "December 2024",
-        },
-      ],
     },
     contact: {
       tagline: "BEGIN THE JOURNEY",
@@ -410,7 +346,6 @@ export const translations: Record<Locale, Translations> = {
       home: "Início",
       portfolio: "Portfólio",
       about: "Sobre",
-      experience: "A Experiência",
       contact: "Contato & Orçamento",
       mentions: "Aviso Legal",
       inquireNow: "Reserve Sua Data",
@@ -458,31 +393,6 @@ export const translations: Record<Locale, Translations> = {
         publicationsLabel: "Publicações Internacionais",
       },
       featuredIn: "Publicado & Reconhecido Por",
-    },
-    testimonials: {
-      tagline: "DEPOIMENTOS",
-      title: "Palavras de Nossos Casais",
-      subtitle: "Nossa maior alegria é saber que essas memórias ecoarão com amor pelas próximas gerações.",
-      items: [
-        {
-          quote: "O Kennedy registrou nosso casamento no Château de Champlâtreux com uma delicadeza surreal. Rever nossas fotos é como reviver aquele dia em um sonho com luz de cinema.",
-          couple: "Camille & Alexandre",
-          location: "Château de Champlâtreux, França",
-          date: "Junho de 2025",
-        },
-        {
-          quote: "Ter o Kennedy conosco no Lago de Como foi a melhor escolha que fizemos. Sua serenidade e olhar poético transformaram cada segundo em uma verdadeira obra de arte.",
-          couple: "Elena & Marcus",
-          location: "Villa Balbianello, Itália",
-          date: "Setembro de 2025",
-        },
-        {
-          quote: "A textura das cores e a autenticidade das fotos que ele fez do nosso casamento em Trancoso superaram tudo o que sonhávamos. Uma sensibilidade ímpar.",
-          couple: "Mariana & Lucas",
-          location: "Trancoso, Brasil",
-          date: "Dezembro de 2024",
-        },
-      ],
     },
     contact: {
       tagline: "COMECE SUA JORNADA",

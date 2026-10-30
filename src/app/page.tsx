@@ -2,7 +2,6 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { PortfolioGallery } from "@/components/PortfolioGallery";
 import { AboutSection } from "@/components/AboutSection";
-import { Testimonials } from "@/components/Testimonials";
 import { ContactSection } from "@/components/ContactSection";
 import { Footer } from "@/components/Footer";
 
@@ -20,9 +19,6 @@ export default function Home() {
 
       {/* Photographer Portrait & Philosophy */}
       <AboutSection />
-
-      {/* Real Couples Testimonials */}
-      <Testimonials />
 
       {/* Bespoke Inquiry & Contact Section */}
       <ContactSection />
