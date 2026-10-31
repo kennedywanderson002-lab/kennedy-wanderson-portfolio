@@ -36,22 +36,20 @@ export interface Translations {
     tagline: string;
     title: string;
     subtitle: string;
+    locationLine: string;
     paragraph1: string;
     paragraph2: string;
     paragraph3: string;
     quote: string;
     quoteAuthor: string;
-    stats: {
-      weddings: string;
-      weddingsLabel: string;
-      countries: string;
-      countriesLabel: string;
-      experience: string;
-      experienceLabel: string;
-      publications: string;
-      publicationsLabel: string;
-    };
-    featuredIn: string;
+    pillarsTitle: string;
+    pillars: Array<{
+      number: string;
+      title: string;
+      description: string;
+    }>;
+    languagesLabel: string;
+    ctaLabel: string;
   };
   contact: {
     tagline: string;
@@ -142,23 +140,38 @@ export const translations: Record<Locale, Translations> = {
     about: {
       tagline: "LE PHOTOGRAPHE",
       title: "Kennedy Wanderson",
-      subtitle: "Une quête inlassable de la lumière dorée, de la spontanéité et de la grâce naturelle.",
-      paragraph1: "Inspiré par la peinture classique européenne et l'esthétique argentique grand format, Kennedy Wanderson crée des images lumineuses et profondément poétiques qui résistent à l'épreuve du temps.",
-      paragraph2: "Chaque mariage est une symphonie d'instants fugaces : un regard complice sous le voile d'une mariée, le bruissement de la soie dans une allée de cyprès en Provence, ou l'énergie vibrante d'un dîner aux chandelles au bord du Lac de Côme.",
-      paragraph3: "Son approche allie la discrétion d'un documentariste à la rigueur esthétique d'un directeur artistique de haute couture, offrant aux couples une expérience sereine, bienveillante et inoubliable.",
-      quote: "La véritable élégance n'est pas de se faire remarquer, mais de rester gravé dans les mémoires.",
+      subtitle: "Une quête sensible de la lumière dorée, du geste vrai et de l'élégance naturelle.",
+      locationLine: "France · Normandie · International",
+      paragraph1: "Basé en France, Kennedy Wanderson façonne une photographie lumineuse et intemporelle où l'émotion sincère rencontre le sens du détail éditorial. Son regard puise dans la douceur de la lumière naturelle pour composer des images vivantes, poétiques et durables.",
+      paragraph2: "Son travail embrasse aussi bien l'intensité d'un mariage sous un ciel de guirlandes étoilées, l'élan romantique d'une séance sur les falaises sauvages d'Étretat en Normandie, la grâce d'un portrait au soleil couchant dans un village français de caractère, que la précision d'un reportage de branding en studio.",
+      paragraph3: "Alliant la discrétion d'un observateur attentif à une direction artistique bienveillante, Kennedy accompagne chaque couple, particulier et créateur avec sérénité — en français, portugais et anglais — du premier échange jusqu'à la remise de vos souvenirs.",
+      quote: "La véritable élégance ne cherche jamais l'artifice : elle réside dans la sincérité d'un regard et la justesse d'une lumière.",
       quoteAuthor: "Kennedy Wanderson",
-      stats: {
-        weddings: "120+",
-        weddingsLabel: "Mariages d'Exception",
-        countries: "14",
-        countriesLabel: "Pays Parcourus",
-        experience: "10 ans",
-        experienceLabel: "D'Excellence Photographique",
-        publications: "25+",
-        publicationsLabel: "Parutions Internationales",
-      },
-      featuredIn: "Publié et Reconnu Par",
+      pillarsTitle: "Univers & Savoir-Faire",
+      pillars: [
+        {
+          number: "01",
+          title: "Mariages & Célébrations",
+          description: "Reportages sur le vif, portraits de mariée au crépuscule et réceptions chaleureuses capturés avec délicatesse.",
+        },
+        {
+          number: "02",
+          title: "Séances Destination",
+          description: "Escapades poétiques en couple face aux falaises d'Étretat, sur la côte normande et à travers l'Europe.",
+        },
+        {
+          number: "03",
+          title: "Portraits & Art de Vivre",
+          description: "Portraits fine art en lumière dorée, jardins secrets et charme authentique du patrimoine français.",
+        },
+        {
+          number: "04",
+          title: "Branding & Studio",
+          description: "Portraits signatures, gestuelle haute précision et univers visuel sur-mesure pour maisons et entrepreneurs.",
+        },
+      ],
+      languagesLabel: "Accompagnement trilingue · Français · Português · English",
+      ctaLabel: "Échanger sur votre projet",
     },
     contact: {
       tagline: "COMMENCER VOTRE HISTOIRE",
@@ -259,23 +272,38 @@ export const translations: Record<Locale, Translations> = {
     about: {
       tagline: "THE ARTIST",
       title: "Kennedy Wanderson",
-      subtitle: "A devotion to luminous light, organic romance, and timeless visual heritage.",
-      paragraph1: "Deeply influenced by European fine art painting and medium format film texture, Kennedy Wanderson crafts poetry in stillness—radiant imagery that feels as breathtaking today as it will fifty years from now.",
-      paragraph2: "Every celebration is an exquisite tapestry of fleeting glances: the wind catching an heirloom veil in a Provence courtyard, quiet whispers beside the shimmering waters of Lake Como, or the joyous cadence of a candlelit dinner in an historic château.",
-      paragraph3: "Balancing the gentle observation of a documentarian with the sophisticated eye of a high fashion editorial director, Kennedy provides a calming, elevated presence for couples around the world.",
-      quote: "True elegance is never loud. It whispers, endures, and becomes legendary with time.",
+      subtitle: "A quiet devotion to golden light, unscripted emotion, and natural elegance.",
+      locationLine: "France · Normandy · Worldwide",
+      paragraph1: "Based in France, Kennedy Wanderson crafts luminous, timeless imagery where genuine human connection meets refined editorial composition. Guided by natural light, his photographs preserve fleeting moments as enduring visual poetry.",
+      paragraph2: "His portfolio spans heartfelt wedding celebrations beneath twinkling garden lights, windswept couple sessions along the dramatic chalk cliffs of Étretat in Normandy, golden-hour portraits through historic French villages, and bespoke studio branding for wellness and creative ateliers.",
+      paragraph3: "Balancing calm documentary discretion with gentle, thoughtful art direction, Kennedy offers couples, individuals, and brands an effortless, elevated experience—fluently in French, Portuguese, and English—from initial conversation to final gallery.",
+      quote: "True elegance never relies on artifice; it lives in the sincerity of a glance and the quiet grace of light.",
       quoteAuthor: "Kennedy Wanderson",
-      stats: {
-        weddings: "120+",
-        weddingsLabel: "Destination Weddings",
-        countries: "14",
-        countriesLabel: "Countries Explored",
-        experience: "10 Years",
-        experienceLabel: "Of Fine Art Mastery",
-        publications: "25+",
-        publicationsLabel: "International Features",
-      },
-      featuredIn: "Featured & Acclaimed By",
+      pillarsTitle: "Signature Universes",
+      pillars: [
+        {
+          number: "01",
+          title: "Weddings & Celebrations",
+          description: "Heartfelt documentary storytelling, twilight bridal portraits, and joyful open-air receptions across France.",
+        },
+        {
+          number: "02",
+          title: "Destination Sessions",
+          description: "Cinematic couple stories framed by the sea cliffs of Étretat, Normandy's coastline, and European landscapes.",
+        },
+        {
+          number: "03",
+          title: "Fine Art Portraits",
+          description: "Golden-hour portraits, sunlit woodlands, and effortless French art de vivre in historic stone villages.",
+        },
+        {
+          number: "04",
+          title: "Studio & Branding",
+          description: "Executive portraits, sensory rituals, and macro craftsmanship tailored for refined personal brands and ateliers.",
+        },
+      ],
+      languagesLabel: "Trilingual guidance · Français · Português · English",
+      ctaLabel: "Inquire about your date",
     },
     contact: {
       tagline: "BEGIN THE JOURNEY",
@@ -376,23 +404,38 @@ export const translations: Record<Locale, Translations> = {
     about: {
       tagline: "O ARTISTA",
       title: "Kennedy Wanderson",
-      subtitle: "Sensibilidade luminosa, olhar calmo e uma devoção permanente à beleza autêntica.",
-      paragraph1: "Inspirado pela estética das pinturas clássicas europeias e pela textura inconfundível do filme analógico, Kennedy Wanderson traduz emoções reais em imagens luminosas e atemporais.",
-      paragraph2: "Cada casamento é único: o véu que dança com a brisa nos jardins de um château francês, a cumplicidade ao pôr do sol no Lago de Como ou o abraço espontâneo durante a celebração.",
-      paragraph3: "Com discrição e um olhar refinado de direção de arte, Kennedy proporciona aos casais uma experiência tranquila, sofisticada e acolhedora do primeiro contato à entrega das memórias.",
-      quote: "A verdadeira elegância não busca impressionar pelo excesso, mas comover pela simplicidade e profundidade.",
+      subtitle: "Sensibilidade luminosa, olhar sereno e devoção permanente à beleza autêntica.",
+      locationLine: "França · Normandia · Internacional",
+      paragraph1: "Radicado na França, Kennedy Wanderson constrói uma fotografia luminosa e atemporal onde a emoção espontânea encontra o rigor da composição editorial. Guiado pela luz natural, seu olhar transforma instantes reais em memórias poéticas que atravessam o tempo.",
+      paragraph2: "Seu trabalho transita com naturalidade entre celebrações de casamento sob luzes acolhedoras ao entardecer, ensaios de casal nas monumentais falésias de Étretat na Normandia, retratos na luz dourada em vilarejos históricos franceses e projetos de branding pessoal e estúdio de alta precisão.",
+      paragraph3: "Unindo a discrição do registro documental a uma direção de arte leve e acolhedora, Kennedy oferece a cada casal, retratado ou marca uma experiência tranquila e personalizada — com atendimento fluente em português, francês e inglês — do primeiro contato à entrega final.",
+      quote: "A verdadeira elegância dispensa excessos: ela nasce da verdade de um gesto e da delicadeza da luz.",
       quoteAuthor: "Kennedy Wanderson",
-      stats: {
-        weddings: "120+",
-        weddingsLabel: "Casamentos Realizados",
-        countries: "14",
-        countriesLabel: "Países Atendidos",
-        experience: "10 Anos",
-        experienceLabel: "De Excelência Fine Art",
-        publications: "25+",
-        publicationsLabel: "Publicações Internacionais",
-      },
-      featuredIn: "Publicado & Reconhecido Por",
+      pillarsTitle: "Universo & Especialidades",
+      pillars: [
+        {
+          number: "01",
+          title: "Casamentos & Celebrações",
+          description: "Registro documental sensível, retratos de noiva ao crepúsculo e a emoção genuína de cada abraço.",
+        },
+        {
+          number: "02",
+          title: "Ensaios Destination",
+          description: "Histórias cinematográficas de casais nas falésias de Étretat, na costa da Normandia e pela Europa.",
+        },
+        {
+          number: "03",
+          title: "Retratos & Art de Vivre",
+          description: "Retratos autorais na luz dourada, jardins históricos e a atmosfera encantadora dos vilarejos franceses.",
+        },
+        {
+          number: "04",
+          title: "Branding & Estúdio",
+          description: "Retratos profissionais, gestos de precisão e narrativa visual refinada para especialistas e marcas.",
+        },
+      ],
+      languagesLabel: "Atendimento trilíngue · Português · Français · English",
+      ctaLabel: "Conversar sobre o seu projeto",
     },
     contact: {
       tagline: "COMECE SUA JORNADA",

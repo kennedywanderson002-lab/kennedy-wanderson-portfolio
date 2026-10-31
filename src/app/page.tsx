@@ -17,7 +17,7 @@ export default function Home() {
       {/* Curated Editorial Portfolio Gallery with Lightbox */}
       <PortfolioGallery />
 
-      {/* Photographer Portrait & Philosophy */}
+      {/* Editorial Biography & Signature Pillars */}
       <AboutSection />
 
       {/* Bespoke Inquiry & Contact Section */}
