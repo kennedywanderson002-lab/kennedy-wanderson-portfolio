@@ -42,14 +42,6 @@ export interface Translations {
     paragraph3: string;
     quote: string;
     quoteAuthor: string;
-    pillarsTitle: string;
-    pillars: Array<{
-      number: string;
-      title: string;
-      description: string;
-    }>;
-    languagesLabel: string;
-    ctaLabel: string;
   };
   contact: {
     tagline: string;
@@ -147,31 +139,6 @@ export const translations: Record<Locale, Translations> = {
       paragraph3: "Alliant la discrétion d'un observateur attentif à une direction artistique bienveillante, Kennedy accompagne chaque couple, particulier et créateur avec sérénité — en français, portugais et anglais — du premier échange jusqu'à la remise de vos souvenirs.",
       quote: "La véritable élégance ne cherche jamais l'artifice : elle réside dans la sincérité d'un regard et la justesse d'une lumière.",
       quoteAuthor: "Kennedy Wanderson",
-      pillarsTitle: "Univers & Savoir-Faire",
-      pillars: [
-        {
-          number: "01",
-          title: "Mariages & Célébrations",
-          description: "Reportages sur le vif, portraits de mariée au crépuscule et réceptions chaleureuses capturés avec délicatesse.",
-        },
-        {
-          number: "02",
-          title: "Séances Destination",
-          description: "Escapades poétiques en couple face aux falaises d'Étretat, sur la côte normande et à travers l'Europe.",
-        },
-        {
-          number: "03",
-          title: "Portraits & Art de Vivre",
-          description: "Portraits fine art en lumière dorée, jardins secrets et charme authentique du patrimoine français.",
-        },
-        {
-          number: "04",
-          title: "Branding & Studio",
-          description: "Portraits signatures, gestuelle haute précision et univers visuel sur-mesure pour maisons et entrepreneurs.",
-        },
-      ],
-      languagesLabel: "Accompagnement trilingue · Français · Português · English",
-      ctaLabel: "Échanger sur votre projet",
     },
     contact: {
       tagline: "COMMENCER VOTRE HISTOIRE",
@@ -279,31 +246,6 @@ export const translations: Record<Locale, Translations> = {
       paragraph3: "Balancing calm documentary discretion with gentle, thoughtful art direction, Kennedy offers couples, individuals, and brands an effortless, elevated experience—fluently in French, Portuguese, and English—from initial conversation to final gallery.",
       quote: "True elegance never relies on artifice; it lives in the sincerity of a glance and the quiet grace of light.",
       quoteAuthor: "Kennedy Wanderson",
-      pillarsTitle: "Signature Universes",
-      pillars: [
-        {
-          number: "01",
-          title: "Weddings & Celebrations",
-          description: "Heartfelt documentary storytelling, twilight bridal portraits, and joyful open-air receptions across France.",
-        },
-        {
-          number: "02",
-          title: "Destination Sessions",
-          description: "Cinematic couple stories framed by the sea cliffs of Étretat, Normandy's coastline, and European landscapes.",
-        },
-        {
-          number: "03",
-          title: "Fine Art Portraits",
-          description: "Golden-hour portraits, sunlit woodlands, and effortless French art de vivre in historic stone villages.",
-        },
-        {
-          number: "04",
-          title: "Studio & Branding",
-          description: "Executive portraits, sensory rituals, and macro craftsmanship tailored for refined personal brands and ateliers.",
-        },
-      ],
-      languagesLabel: "Trilingual guidance · Français · Português · English",
-      ctaLabel: "Inquire about your date",
     },
     contact: {
       tagline: "BEGIN THE JOURNEY",
@@ -411,31 +353,6 @@ export const translations: Record<Locale, Translations> = {
       paragraph3: "Unindo a discrição do registro documental a uma direção de arte leve e acolhedora, Kennedy oferece a cada casal, retratado ou marca uma experiência tranquila e personalizada — com atendimento fluente em português, francês e inglês — do primeiro contato à entrega final.",
       quote: "A verdadeira elegância dispensa excessos: ela nasce da verdade de um gesto e da delicadeza da luz.",
       quoteAuthor: "Kennedy Wanderson",
-      pillarsTitle: "Universo & Especialidades",
-      pillars: [
-        {
-          number: "01",
-          title: "Casamentos & Celebrações",
-          description: "Registro documental sensível, retratos de noiva ao crepúsculo e a emoção genuína de cada abraço.",
-        },
-        {
-          number: "02",
-          title: "Ensaios Destination",
-          description: "Histórias cinematográficas de casais nas falésias de Étretat, na costa da Normandia e pela Europa.",
-        },
-        {
-          number: "03",
-          title: "Retratos & Art de Vivre",
-          description: "Retratos autorais na luz dourada, jardins históricos e a atmosfera encantadora dos vilarejos franceses.",
-        },
-        {
-          number: "04",
-          title: "Branding & Estúdio",
-          description: "Retratos profissionais, gestos de precisão e narrativa visual refinada para especialistas e marcas.",
-        },
-      ],
-      languagesLabel: "Atendimento trilíngue · Português · Français · English",
-      ctaLabel: "Conversar sobre o seu projeto",
     },
     contact: {
       tagline: "COMECE SUA JORNADA",
