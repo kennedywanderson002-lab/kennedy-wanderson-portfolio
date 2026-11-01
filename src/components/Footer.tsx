@@ -5,14 +5,19 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { MentionsLegalesModal } from "./MentionsLegalesModal";
 
-export function Footer() {
+interface FooterProps {
+  instagramUrl?: string;
+}
+
+export function Footer({
+  instagramUrl = "https://instagram.com",
+}: FooterProps) {
   const { t } = useLanguage();
   const [mentionsOpen, setMentionsOpen] = useState(false);
 
   return (
     <footer className="bg-white text-[#181716] py-16 sm:py-20 border-t border-[#EFECE6]">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex flex-col items-center justify-center text-center">
-        
         {/* Brand Logo in Footer */}
         <Link href="#home" className="inline-block group mb-6">
           <span className="block font-serif text-lg sm:text-xl tracking-[0.25em] uppercase font-light text-[#181716]">
@@ -26,7 +31,7 @@ export function Footer() {
         {/* Social Link (Instagram) */}
         <div className="mb-8">
           <a
-            href="https://instagram.com"
+            href={instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-[10px] uppercase tracking-[0.25em] text-[#8C8780] hover:text-[#181716] transition-colors"
@@ -43,12 +48,11 @@ export function Footer() {
           <span className="hidden sm:inline-block">·</span>
           <button
             onClick={() => setMentionsOpen(true)}
-            className="hover:text-[#181716] transition-colors underline underline-offset-4"
+            className="hover:text-[#181716] transition-colors underline underline-offset-4 cursor-pointer"
           >
             {t.footer.mentionsLegales}
           </button>
         </div>
-
       </div>
 
       {/* French LCEN Legal Modal */}

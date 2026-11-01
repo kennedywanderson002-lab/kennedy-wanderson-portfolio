@@ -1,6 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useSyncExternalStore,
+  ReactNode,
+} from "react";
 import { Locale, Translations, translations } from "@/data/translations";
 
 interface LanguageContextProps {
@@ -9,34 +14,60 @@ interface LanguageContextProps {
   t: Translations;
 }
 
-const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextProps | undefined>(
+  undefined
+);
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("fr");
+const LOCALE_EVENT = "kw-locale-change";
 
-  useEffect(() => {
-    // Check localStorage or browser language
-    const saved = localStorage.getItem("kw_locale") as Locale | null;
-    if (saved && (saved === "fr" || saved === "en" || saved === "pt")) {
-      setLocaleState(saved);
-    } else {
-      const browserLang = navigator.language.slice(0, 2);
-      if (browserLang === "pt") {
-        setLocaleState("pt");
-      } else if (browserLang === "fr") {
-        setLocaleState("fr");
-      } else {
-        setLocaleState("en");
-      }
-    }
-  }, []);
+function subscribeLocale(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", callback);
+  window.addEventListener(LOCALE_EVENT, callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(LOCALE_EVENT, callback);
+  };
+}
+
+function getClientLocaleSnapshot(): Locale {
+  if (typeof window === "undefined") return "fr";
+  const saved = window.localStorage.getItem("kw_locale");
+  if (saved === "fr" || saved === "en" || saved === "pt") {
+    return saved;
+  }
+  const browserLang = window.navigator.language.slice(0, 2);
+  if (browserLang === "pt") return "pt";
+  if (browserLang === "fr") return "fr";
+  return "en";
+}
+
+function getServerLocaleSnapshot(): Locale {
+  return "fr";
+}
+
+export function LanguageProvider({
+  children,
+  initialTranslations,
+}: {
+  children: ReactNode;
+  initialTranslations?: Record<Locale, Translations>;
+}) {
+  const locale = useSyncExternalStore(
+    subscribeLocale,
+    getClientLocaleSnapshot,
+    getServerLocaleSnapshot
+  );
 
   const setLocale = (newLocale: Locale) => {
-    setLocaleState(newLocale);
-    localStorage.setItem("kw_locale", newLocale);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kw_locale", newLocale);
+      window.dispatchEvent(new Event(LOCALE_EVENT));
+    }
   };
 
-  const t = translations[locale];
+  const dictionary = initialTranslations ?? translations;
+  const t = dictionary[locale] ?? translations[locale];
 
   return (
     <LanguageContext.Provider value={{ locale, setLocale, t }}>

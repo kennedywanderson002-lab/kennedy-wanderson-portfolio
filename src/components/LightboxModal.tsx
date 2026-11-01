@@ -15,13 +15,15 @@ interface LightboxModalProps {
 
 export function LightboxModal({ project, onClose, onPrev, onNext }: LightboxModalProps) {
   const { locale, t } = useLanguage();
-  const [activeImage, setActiveImage] = React.useState<string>(project?.coverImage || "");
+  const [imageSelection, setImageSelection] = React.useState<{
+    projectId: string;
+    url: string;
+  } | null>(null);
 
-  useEffect(() => {
-    if (project) {
-      setActiveImage(project.coverImage);
-    }
-  }, [project]);
+  const activeImage =
+    project && imageSelection?.projectId === project.id
+      ? imageSelection.url
+      : project?.coverImage || "";
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -151,7 +153,9 @@ export function LightboxModal({ project, onClose, onPrev, onNext }: LightboxModa
                     <button
                       key={imgUrl + i}
                       type="button"
-                      onClick={() => setActiveImage(imgUrl)}
+                      onClick={() =>
+                        setImageSelection({ projectId: project.id, url: imgUrl })
+                      }
                       className={`relative w-14 h-14 rounded-md overflow-hidden shrink-0 border transition-all cursor-pointer ${
                         activeImage === imgUrl
                           ? "border-[#BFA989] ring-2 ring-[#BFA989]/40 scale-105"

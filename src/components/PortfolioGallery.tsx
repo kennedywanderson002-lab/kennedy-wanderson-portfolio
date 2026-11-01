@@ -1,15 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 import { portfolioProjects, PortfolioProject } from "@/data/portfolio";
+import {
+  legacyObjectPositionToFocalPoint,
+  type CmsPortfolioProject,
+} from "@/lib/cms/types";
 import { LightboxModal } from "./LightboxModal";
 
-export function PortfolioGallery() {
+interface PortfolioGalleryProps {
+  projects?: CmsPortfolioProject[];
+}
+
+export function PortfolioGallery({ projects }: PortfolioGalleryProps) {
   const { locale, t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [selectedProjectIndex, setSelectedProjectIndex] = useState<number | null>(null);
+  const [selectedProjectIndex, setSelectedProjectIndex] = useState<
+    number | null
+  >(null);
+
+  const activeProjects: (PortfolioProject & { focalPoint?: string })[] =
+    useMemo(() => {
+      if (projects && projects.length > 0) {
+        return projects;
+      }
+      return portfolioProjects.map((p) => ({
+        ...p,
+        focalPoint: legacyObjectPositionToFocalPoint(p.objectPosition),
+      }));
+    }, [projects]);
 
   const filterTabs = [
     { id: "all", label: t.portfolio.all },
@@ -19,19 +40,22 @@ export function PortfolioGallery() {
     { id: "details", label: t.portfolio.details },
   ];
 
-  const filteredProjects = activeCategory === "all"
-    ? portfolioProjects
-    : portfolioProjects.filter((p) => p.category === activeCategory);
+  const filteredProjects =
+    activeCategory === "all"
+      ? activeProjects
+      : activeProjects.filter((p) => p.category === activeCategory);
 
   const openLightbox = (project: PortfolioProject) => {
-    const index = portfolioProjects.findIndex((p) => p.id === project.id);
+    const index = activeProjects.findIndex((p) => p.id === project.id);
     setSelectedProjectIndex(index >= 0 ? index : 0);
   };
 
   const handlePrev = () => {
     if (selectedProjectIndex !== null) {
       setSelectedProjectIndex(
-        selectedProjectIndex === 0 ? portfolioProjects.length - 1 : selectedProjectIndex - 1
+        selectedProjectIndex === 0
+          ? activeProjects.length - 1
+          : selectedProjectIndex - 1
       );
     }
   };
@@ -39,7 +63,9 @@ export function PortfolioGallery() {
   const handleNext = () => {
     if (selectedProjectIndex !== null) {
       setSelectedProjectIndex(
-        selectedProjectIndex === portfolioProjects.length - 1 ? 0 : selectedProjectIndex + 1
+        selectedProjectIndex === activeProjects.length - 1
+          ? 0
+          : selectedProjectIndex + 1
       );
     }
   };
@@ -47,7 +73,6 @@ export function PortfolioGallery() {
   return (
     <section id="portfolio" className="py-28 sm:py-36 bg-white">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16">
-        
         {/* Minimal Section Header (Jose Villa Style) */}
         <div className="text-center max-w-2xl mx-auto mb-20 sm:mb-24">
           <p className="text-[9px] sm:text-[10px] font-sans uppercase tracking-[0.4em] font-medium text-[#8C8780] mb-4">
@@ -86,8 +111,14 @@ export function PortfolioGallery() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-x-10 gap-y-16 sm:gap-y-24 items-start">
           {filteredProjects.map((project) => {
             const colSpan = project.colSpan || "lg:col-span-6";
-            const aspectClass = project.aspectClass || (project.aspectRatio === "landscape" ? "aspect-[3/2]" : "aspect-[4/5]");
-            const objectPos = project.objectPosition || "object-top";
+            const aspectClass =
+              project.aspectClass ||
+              (project.aspectRatio === "landscape"
+                ? "aspect-[3/2]"
+                : "aspect-[4/5]");
+            const focalPoint =
+              project.focalPoint ||
+              legacyObjectPositionToFocalPoint(project.objectPosition);
 
             return (
               <div
@@ -96,14 +127,17 @@ export function PortfolioGallery() {
                 className={`group cursor-pointer ${colSpan} flex flex-col`}
               >
                 {/* Pure Photograph without borders or card background */}
-                <div className={`relative w-full ${aspectClass} overflow-hidden bg-[#FAF9F6]`}>
+                <div
+                  className={`relative w-full ${aspectClass} overflow-hidden bg-[#FAF9F6]`}
+                >
                   <Image
                     src={project.coverImage}
                     alt={project.title[locale]}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
                     loading="lazy"
-                    className={`object-cover ${objectPos} transition-transform duration-1000 ease-out group-hover:scale-[1.03]`}
+                    style={{ objectPosition: focalPoint }}
+                    className="object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.03]"
                     quality={90}
                   />
                   {/* Gentle hover shimmer */}
@@ -118,26 +152,28 @@ export function PortfolioGallery() {
                   <h3 className="font-serif italic text-xl sm:text-2xl text-[#181716] font-light mt-1 group-hover:text-[#9E8765] transition-colors">
                     {project.title[locale]}
                   </h3>
-                  <p className="text-[10px] font-mono text-[#9C968F] mt-1 tracking-wider uppercase">
-                    {project.camera.split("·")[0]}
-                  </p>
+                  {project.camera && (
+                    <p className="text-[10px] font-mono text-[#9C968F] mt-1 tracking-wider uppercase">
+                      {project.camera.split("·")[0]}
+                    </p>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
-
       </div>
 
       {/* Lightbox Modal */}
-      {selectedProjectIndex !== null && (
-        <LightboxModal
-          project={portfolioProjects[selectedProjectIndex]}
-          onClose={() => setSelectedProjectIndex(null)}
-          onPrev={handlePrev}
-          onNext={handleNext}
-        />
-      )}
+      {selectedProjectIndex !== null &&
+        activeProjects[selectedProjectIndex] && (
+          <LightboxModal
+            project={activeProjects[selectedProjectIndex]}
+            onClose={() => setSelectedProjectIndex(null)}
+            onPrev={handlePrev}
+            onNext={handleNext}
+          />
+        )}
     </section>
   );
 }

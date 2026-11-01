@@ -6,7 +6,15 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Locale } from "@/data/translations";
 import { X } from "lucide-react";
 
-export function Navbar() {
+interface NavbarProps {
+  contactEmail?: string;
+  instagramUrl?: string;
+}
+
+export function Navbar({
+  contactEmail = "contact@kennedywanderson.com",
+  instagramUrl = "https://instagram.com",
+}: NavbarProps) {
   const { locale, setLocale, t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -47,7 +55,6 @@ export function Navbar() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 flex items-center justify-between">
-          
           {/* Left: Minimalist Language Selector */}
           <div className="flex items-center space-x-2 text-[10px] tracking-[0.2em] font-sans uppercase">
             {languages.map((lang, index) => (
@@ -121,7 +128,10 @@ export function Navbar() {
               aria-label="Close Navigation Menu"
               className="group p-2.5 rounded-full hover:bg-black/5 transition-colors focus:outline-hidden"
             >
-              <X size={26} className="text-[#181716] group-hover:scale-110 transition-transform" />
+              <X
+                size={26}
+                className="text-[#181716] group-hover:scale-110 transition-transform"
+              />
             </button>
           </div>
 
@@ -165,7 +175,7 @@ export function Navbar() {
 
             <div className="flex items-center space-x-6 text-[10px] tracking-[0.2em] uppercase">
               <a
-                href="https://instagram.com"
+                href={instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-[#181716] transition-colors"
@@ -174,10 +184,10 @@ export function Navbar() {
               </a>
               <span>·</span>
               <a
-                href="mailto:contact@kennedywanderson.com"
+                href={`mailto:${contactEmail}`}
                 className="hover:text-[#181716] transition-colors"
               >
-                contact@kennedywanderson.com
+                {contactEmail}
               </a>
             </div>
           </div>
