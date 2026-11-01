@@ -1,8 +1,13 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle, type NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as schema from "./schema";
+import { cleanEnv } from "@/lib/env";
 
 let cachedDb: NeonHttpDatabase<typeof schema> | null = null;
+
+export function getCleanDatabaseUrl(): string {
+  return cleanEnv(process.env.DATABASE_URL);
+}
 
 /**
  * Checks whether a valid Postgres connection string is configured.
@@ -10,7 +15,7 @@ let cachedDb: NeonHttpDatabase<typeof schema> | null = null;
  * Neon Storage is connected in the Vercel dashboard.
  */
 export function isDatabaseConfigured(): boolean {
-  const url = process.env.DATABASE_URL?.trim();
+  const url = getCleanDatabaseUrl();
   return Boolean(
     url &&
       (url.startsWith("postgres://") || url.startsWith("postgresql://")) &&
@@ -26,7 +31,7 @@ export function getDb(): NeonHttpDatabase<typeof schema> {
   }
 
   if (!cachedDb) {
-    const sql = neon(process.env.DATABASE_URL!.trim());
+    const sql = neon(getCleanDatabaseUrl());
     cachedDb = drizzle({ client: sql, schema });
   }
 
@@ -34,4 +39,3 @@ export function getDb(): NeonHttpDatabase<typeof schema> {
 }
 
 export { schema };
-

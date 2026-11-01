@@ -4,13 +4,18 @@ import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
 import { connection } from "next/server";
 import { getDb, isDatabaseConfigured, schema } from "@/db";
+import { cleanEnv, resolveValidBaseUrl } from "@/lib/env";
 
 function createAuthInstance() {
   const db = getDb();
+  const secret =
+    cleanEnv(process.env.BETTER_AUTH_SECRET) ||
+    "kw_fallback_secret_min_32_characters_long_safe";
+  const baseURL = resolveValidBaseUrl(process.env.BETTER_AUTH_URL);
 
   return betterAuth({
-    secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL || undefined,
+    secret,
+    baseURL,
     database: drizzleAdapter(db, {
       provider: "pg",
       schema,
@@ -34,7 +39,11 @@ function createAuthInstance() {
       max: 20,
       storage: "database",
     },
-    trustedOrigins: ["https://*.vercel.app"],
+    trustedOrigins: [
+      "https://*.vercel.app",
+      "https://kennedywanderson.com",
+      "https://www.kennedywanderson.com",
+    ],
     plugins: [nextCookies()], // Must remain last in plugins array
   });
 }
@@ -78,4 +87,3 @@ export async function requireAdmin() {
   }
   return session;
 }
-

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { requireAdmin } from "@/lib/auth";
-import { isBlobConfigured } from "@/lib/cms/blob";
+import { getCleanBlobToken, isBlobConfigured } from "@/lib/cms/blob";
 
 export async function POST(request: Request): Promise<NextResponse> {
   if (!isBlobConfigured()) {
@@ -18,6 +18,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const body = (await request.json()) as HandleUploadBody;
 
     const jsonResponse = await handleUpload({
+      token: getCleanBlobToken(),
       body,
       request,
       onBeforeGenerateToken: async () => {
@@ -51,4 +52,3 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: message }, { status });
   }
 }
-

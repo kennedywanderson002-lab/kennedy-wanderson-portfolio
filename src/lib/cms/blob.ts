@@ -1,7 +1,12 @@
 import { del } from "@vercel/blob";
+import { cleanEnv } from "@/lib/env";
+
+export function getCleanBlobToken(): string {
+  return cleanEnv(process.env.BLOB_READ_WRITE_TOKEN);
+}
 
 export function isBlobConfigured(): boolean {
-  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  const token = getCleanBlobToken();
   return Boolean(
     token &&
       token.startsWith("vercel_blob_rw_") &&
@@ -28,9 +33,11 @@ export async function safeDeleteBlob(url?: string | null): Promise<void> {
     return;
   }
   try {
-    await del(url);
+    await del(url, { token: getCleanBlobToken() });
   } catch (error) {
-    console.warn("[CMS Blob] Falha não-bloqueante ao remover blob antigo:", error);
+    console.warn(
+      "[CMS Blob] Falha não-bloqueante ao remover blob antigo:",
+      error
+    );
   }
 }
-
