@@ -2,7 +2,6 @@
 
 import React, { useRef, useState } from "react";
 import Image from "next/image";
-import { upload } from "@vercel/blob/client";
 import {
   UploadCloud,
   Crosshair,
@@ -10,6 +9,7 @@ import {
   Link2,
   RotateCcw,
 } from "lucide-react";
+import { uploadAdminImage } from "@/lib/cms/upload-client";
 
 interface ImageUploaderWithFocalPointProps {
   label: string;
@@ -68,27 +68,14 @@ export function ImageUploaderWithFocalPoint({
 
     setIsUploading(true);
     try {
-      const cleanName = file.name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9._-]+/g, "-");
-
-      const blob = await upload(`portfolio/${cleanName}`, file, {
-        access: "public",
-        handleUploadUrl: "/api/admin/upload",
-      });
-
+      const blob = await uploadAdminImage(file);
       onImageChange(blob.url, blob.pathname);
     } catch (err) {
       const msg =
         err instanceof Error
           ? err.message
           : "Falha ao enviar imagem para o Vercel Blob.";
-      setUploadError(
-        msg.includes("503") || msg.includes("BLOB")
-          ? "O Vercel Blob ainda não foi ativado (BLOB_READ_WRITE_TOKEN). Ative na aba Storage da Vercel ou informe uma URL abaixo."
-          : msg
-      );
+      setUploadError(msg);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {

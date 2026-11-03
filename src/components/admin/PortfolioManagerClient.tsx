@@ -3,7 +3,7 @@
 import React, { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { upload } from "@vercel/blob/client";
+import { uploadAdminImage } from "@/lib/cms/upload-client";
 import {
   Plus,
   Pencil,
@@ -271,18 +271,7 @@ export function PortfolioManagerClient({
     try {
       const uploadedItems: CmsPortfolioImage[] = [];
       for (const file of Array.from(files)) {
-        if (file.size > 25 * 1024 * 1024) {
-          throw new Error(`A foto ${file.name} excede 25 MB.`);
-        }
-        const cleanName = file.name
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-zA-Z0-9._-]+/g, "-");
-
-        const blob = await upload(`portfolio/${cleanName}`, file, {
-          access: "public",
-          handleUploadUrl: "/api/admin/upload",
-        });
+        const blob = await uploadAdminImage(file);
 
         uploadedItems.push({
           id: `temp-img-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -306,11 +295,7 @@ export function PortfolioManagerClient({
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : "Erro ao enviar fotos da galeria.";
-      setErrorNotice(
-        msg.includes("503") || msg.includes("BLOB")
-          ? "Ative o Vercel Blob (BLOB_READ_WRITE_TOKEN) na aba Storage da Vercel para fazer upload direto."
-          : msg
-      );
+      setErrorNotice(msg);
     } finally {
       setUploadingGallery(false);
       if (galleryInputRef.current) {
