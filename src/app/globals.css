@@ -110,105 +110,74 @@ body {
   background: #9E8765;
 }
 
-/* Left-to-Right Slide-In Navigation Drawer (Top-Layer + Scroll-Snap) */
-.kw-drawer {
-  --drawer-width: min(23.5rem, 84dvw);
-  --drawer-backdrop: 0;
+/* Left-to-Right Slide-In Modal Navigation Dialog */
+.kw-nav-dialog {
   position: fixed;
-  inset: 0;
+  inset: 0 auto 0 0;
   margin: 0;
   padding: 0;
-  width: auto;
-  height: auto;
-  max-width: none;
-  max-height: none;
-  background: transparent;
-  border: 0;
-  overflow: visible;
-}
-
-.kw-drawer.is-fallback-closed {
-  display: none;
-}
-
-.kw-drawer.is-fallback-open {
-  display: block;
-  z-index: 60;
-}
-
-.kw-drawer::backdrop {
-  background: #141312;
-  opacity: calc(var(--drawer-backdrop) * 0.48);
-}
-
-.kw-drawer-scroller {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--drawer-width) 100%;
-  width: 100%;
-  height: 100%;
-  overflow-x: scroll;
-  overscroll-behavior: none;
-  scrollbar-width: none;
-  scroll-snap-type: x mandatory;
-}
-
-.kw-drawer-scroller::-webkit-scrollbar,
-.kw-drawer-sheet::-webkit-scrollbar {
-  display: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .kw-drawer-scroller {
-    scroll-behavior: smooth;
-  }
-}
-
-.kw-drawer-scroller::after {
-  content: "";
-  display: block;
-  width: 100%;
-  height: 100svh;
-  scroll-snap-align: end;
-  scroll-initial-target: nearest;
-}
-
-.kw-drawer-sheet {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  height: 100svh;
+  width: min(23.5rem, 84dvw);
+  max-width: min(23.5rem, 84dvw);
+  height: 100dvh;
+  max-height: 100dvh;
   background: #FAF9F6;
   color: #181716;
+  border: 0;
   border-right: 1px solid #E5E1DA;
   box-shadow: 16px 0 48px rgba(20, 19, 18, 0.14);
-  overflow-y: auto;
-  scroll-snap-align: start;
-  scrollbar-width: none;
+  opacity: 0;
+  transform: translateX(-100%);
+  transition-property: transform, opacity, display, overlay;
+  transition-duration: 0.28s;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-behavior: allow-discrete;
 }
 
-@property --drawer-backdrop {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 0;
+.kw-nav-dialog:modal {
+  overscroll-behavior: contain;
 }
 
-@supports (animation-timeline: scroll()) {
-  .kw-drawer {
-    timeline-scope: --drawer-fade;
-    animation: fade-drawer-backdrop linear both;
-    animation-timeline: --drawer-fade;
+.kw-nav-dialog::backdrop {
+  background-color: rgba(20, 19, 18, 0);
+  overflow: hidden;
+  overscroll-behavior: contain;
+  transition-property: background-color, display, overlay;
+  transition-duration: 0.28s;
+  transition-timing-function: ease-out;
+  transition-behavior: allow-discrete;
+}
+
+:is(.kw-nav-dialog[open]):where(:not([data-closing])) {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@starting-style {
+  :is(.kw-nav-dialog[open]):where(:not([data-closing])) {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+}
+
+:is(.kw-nav-dialog[open]):where(:not([data-closing]))::backdrop {
+  background-color: rgba(20, 19, 18, 0.48);
+}
+
+@starting-style {
+  :is(.kw-nav-dialog[open]):where(:not([data-closing]))::backdrop {
+    background-color: rgba(20, 19, 18, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kw-nav-dialog {
+    transform: none;
+    transition-duration: 0.1s;
   }
 
-  .kw-drawer-scroller {
-    scroll-timeline: --drawer-fade x;
-  }
-
-  @keyframes fade-drawer-backdrop {
-    0% {
-      --drawer-backdrop: 1;
-    }
-    100% {
-      --drawer-backdrop: 0;
+  @starting-style {
+    :is(.kw-nav-dialog[open]):where(:not([data-closing])) {
+      transform: none;
     }
   }
 }

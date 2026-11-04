@@ -20,13 +20,13 @@ export default async function Home() {
 
   return (
     <LanguageProvider initialTranslations={siteSettings.translations}>
-      <main className="min-h-screen flex flex-col bg-white">
-        {/* Sticky Editorial Navbar */}
-        <Navbar
-          contactEmail={siteSettings.contactEmail}
-          instagramUrl={siteSettings.instagramUrl}
-        />
+      {/* Sticky Editorial Navbar & Left-to-Right Modal Drawer (outside <main>) */}
+      <Navbar
+        contactEmail={siteSettings.contactEmail}
+        instagramUrl={siteSettings.instagramUrl}
+      />
 
+      <main className="min-h-screen flex flex-col bg-white">
         {/* Hero Section */}
         <Hero slides={heroSlides} />
 
