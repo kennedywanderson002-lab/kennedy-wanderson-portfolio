@@ -279,22 +279,7 @@ export function ImageUploaderWithFocalPoint({
     emitActiveViewportFraming({ x: nextX, y: nextY });
   };
 
-  const handleStagePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    const session = dragSessionRef.current;
-    const stage = stageRef.current;
-    if (!session || !stage) return;
-
-    if (!session.moved) {
-      // Single click/tap: set focal point directly to clicked coordinate
-      const rect = stage.getBoundingClientRect();
-      const relX = ((e.clientX - rect.left) / Math.max(rect.width, 1)) * 100;
-      const relY = ((e.clientY - rect.top) / Math.max(rect.height, 1)) * 100;
-      emitActiveViewportFraming({
-        x: clampFramingCoord(relX, activeViewport.x),
-        y: clampFramingCoord(relY, activeViewport.y),
-      });
-    }
-
+  const handleStagePointerUp = () => {
     dragSessionRef.current = null;
     setIsDraggingStage(false);
   };

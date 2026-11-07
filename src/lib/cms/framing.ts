@@ -140,8 +140,10 @@ export function parseImageFraming(
   );
 
   // Parse independent desktop framing if present: desktop=x,y,zoom
+  // When not explicitly present in legacy strings, keep desktop X centered (50%)
+  // so mobile horizontal adjustments never pull desktop images off-center, while preserving vertical Y.
   let desktop: ViewportFraming = {
-    x: parsedX,
+    x: 50,
     y: parsedY,
     zoom: 1,
   };
@@ -151,7 +153,7 @@ export function parseImageFraming(
   );
   if (desktopMatch) {
     desktop = {
-      x: clampFramingCoord(Number.parseFloat(desktopMatch[1]), parsedX),
+      x: clampFramingCoord(Number.parseFloat(desktopMatch[1]), 50),
       y: clampFramingCoord(Number.parseFloat(desktopMatch[2]), parsedY),
       zoom: clampFramingZoom(Number.parseFloat(desktopMatch[3]), 1),
     };
