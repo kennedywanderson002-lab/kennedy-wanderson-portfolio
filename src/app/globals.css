@@ -181,3 +181,18 @@ body {
     }
   }
 }
+
+/* Independent Mobile (< 768px) and Desktop (>= 768px) CMS Image Framing */
+.cms-framed-image {
+  object-position: var(--fp-m-pos, 50% 0%);
+  transform-origin: var(--fp-m-pos, 50% 0%);
+  transform: scale(var(--fp-m-scale, 1));
+}
+
+@media (min-width: 768px) {
+  .cms-framed-image {
+    object-position: var(--fp-d-pos, var(--fp-m-pos, 50% 0%));
+    transform-origin: var(--fp-d-pos, var(--fp-m-pos, 50% 0%));
+    transform: scale(var(--fp-d-scale, var(--fp-m-scale, 1)));
+  }
+}

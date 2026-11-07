@@ -16,16 +16,19 @@ import {
   LayoutGrid,
   Move,
   Sparkles,
+  Copy,
 } from "lucide-react";
 import { uploadAdminImage } from "@/lib/cms/upload-client";
 import {
   clampFramingCoord,
   clampFramingZoom,
-  getFramedImageStyle,
+  getViewportFramedImageStyle,
   parseImageFraming,
   serializeImageFraming,
   type DesktopHeroFitMode,
+  type FramingViewport,
   type ImageFramingConfig,
+  type ViewportFraming,
 } from "@/lib/cms/framing";
 
 export type PortfolioAspectOption =
@@ -115,6 +118,10 @@ export function ImageUploaderWithFocalPoint({
   const [showGridOverlay, setShowGridOverlay] = useState(true);
   const [isDraggingStage, setIsDraggingStage] = useState(false);
 
+  // Independent target device being edited ("mobile" vs "desktop")
+  const [editingDevice, setEditingDevice] =
+    useState<FramingViewport>("mobile");
+
   const [heroPreviewTab, setHeroPreviewTab] = useState<
     "mobile" | "desktop" | "split"
   >("split");
@@ -133,12 +140,59 @@ export function ImageUploaderWithFocalPoint({
 
   const framing = parseImageFraming(focalPoint);
 
-  const emitFraming = (patch: Partial<ImageFramingConfig>) => {
+  // Active viewport values based on whether the user is editing Mobile or Desktop
+  const activeViewport: ViewportFraming =
+    editingDevice === "desktop"
+      ? framing.desktop
+      : { x: framing.x, y: framing.y, zoom: framing.zoom };
+
+  // Updates ONLY the currently selected device ("mobile" or "desktop") without touching the other
+  const emitActiveViewportFraming = (patch: Partial<ViewportFraming>) => {
+    if (editingDevice === "desktop") {
+      const next: ImageFramingConfig = {
+        ...framing,
+        desktop: {
+          ...framing.desktop,
+          ...patch,
+        },
+      };
+      onFocalPointChange(serializeImageFraming(next));
+    } else {
+      const next: ImageFramingConfig = {
+        ...framing,
+        x: patch.x ?? framing.x,
+        y: patch.y ?? framing.y,
+        zoom: patch.zoom ?? framing.zoom,
+        desktop: { ...framing.desktop },
+      };
+      onFocalPointChange(serializeImageFraming(next));
+    }
+  };
+
+  const setDesktopHeroFit = (mode: DesktopHeroFitMode) => {
     const next: ImageFramingConfig = {
       ...framing,
-      ...patch,
+      desktopFit: mode,
     };
     onFocalPointChange(serializeImageFraming(next));
+  };
+
+  const copyFromOtherDevice = () => {
+    if (editingDevice === "desktop") {
+      const next: ImageFramingConfig = {
+        ...framing,
+        desktop: { x: framing.x, y: framing.y, zoom: framing.zoom },
+      };
+      onFocalPointChange(serializeImageFraming(next));
+    } else {
+      const next: ImageFramingConfig = {
+        ...framing,
+        x: framing.desktop.x,
+        y: framing.desktop.y,
+        zoom: framing.desktop.zoom,
+      };
+      onFocalPointChange(serializeImageFraming(next));
+    }
   };
 
   const handleFileSelect = async (file: File | null | undefined) => {
@@ -184,8 +238,8 @@ export function ImageUploaderWithFocalPoint({
       pointerId: e.pointerId,
       startClientX: e.clientX,
       startClientY: e.clientY,
-      startX: framing.x,
-      startY: framing.y,
+      startX: activeViewport.x,
+      startY: activeViewport.y,
       moved: false,
     };
   };
@@ -212,17 +266,17 @@ export function ImageUploaderWithFocalPoint({
     const height = Math.max(rect.height, 1);
 
     // Natural drag-to-pan: dragging image right/down reveals left/top of photograph
-    const sensitivity = 100 / Math.max(1, framing.zoom * 0.85);
+    const sensitivity = 100 / Math.max(1, activeViewport.zoom * 0.85);
     const nextX = clampFramingCoord(
       session.startX - (dx / width) * sensitivity,
-      framing.x
+      activeViewport.x
     );
     const nextY = clampFramingCoord(
       session.startY - (dy / height) * sensitivity,
-      framing.y
+      activeViewport.y
     );
 
-    emitFraming({ x: nextX, y: nextY });
+    emitActiveViewportFraming({ x: nextX, y: nextY });
   };
 
   const handleStagePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -235,9 +289,9 @@ export function ImageUploaderWithFocalPoint({
       const rect = stage.getBoundingClientRect();
       const relX = ((e.clientX - rect.left) / Math.max(rect.width, 1)) * 100;
       const relY = ((e.clientY - rect.top) / Math.max(rect.height, 1)) * 100;
-      emitFraming({
-        x: clampFramingCoord(relX, framing.x),
-        y: clampFramingCoord(relY, framing.y),
+      emitActiveViewportFraming({
+        x: clampFramingCoord(relX, activeViewport.x),
+        y: clampFramingCoord(relY, activeViewport.y),
       });
     }
 
@@ -254,22 +308,34 @@ export function ImageUploaderWithFocalPoint({
     const step = e.shiftKey ? 5 : 1;
     if (e.key === "ArrowLeft") {
       e.preventDefault();
-      emitFraming({ x: clampFramingCoord(framing.x - step, framing.x) });
+      emitActiveViewportFraming({
+        x: clampFramingCoord(activeViewport.x - step, activeViewport.x),
+      });
     } else if (e.key === "ArrowRight") {
       e.preventDefault();
-      emitFraming({ x: clampFramingCoord(framing.x + step, framing.x) });
+      emitActiveViewportFraming({
+        x: clampFramingCoord(activeViewport.x + step, activeViewport.x),
+      });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      emitFraming({ y: clampFramingCoord(framing.y - step, framing.y) });
+      emitActiveViewportFraming({
+        y: clampFramingCoord(activeViewport.y - step, activeViewport.y),
+      });
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      emitFraming({ y: clampFramingCoord(framing.y + step, framing.y) });
+      emitActiveViewportFraming({
+        y: clampFramingCoord(activeViewport.y + step, activeViewport.y),
+      });
     } else if (e.key === "+" || e.key === "=") {
       e.preventDefault();
-      emitFraming({ zoom: clampFramingZoom(framing.zoom + 0.1, framing.zoom) });
+      emitActiveViewportFraming({
+        zoom: clampFramingZoom(activeViewport.zoom + 0.1, activeViewport.zoom),
+      });
     } else if (e.key === "-") {
       e.preventDefault();
-      emitFraming({ zoom: clampFramingZoom(framing.zoom - 0.1, framing.zoom) });
+      emitActiveViewportFraming({
+        zoom: clampFramingZoom(activeViewport.zoom - 0.1, activeViewport.zoom),
+      });
     }
   };
 
@@ -278,13 +344,25 @@ export function ImageUploaderWithFocalPoint({
       ? previewContext.aspectClass
       : previewAspectClass;
 
-  const framedStyle = getFramedImageStyle(framing);
+  const mobileFramedStyle = getViewportFramedImageStyle(framing, "mobile");
+  const desktopFramedStyle = getViewportFramedImageStyle(framing, "desktop");
+  const activeStageStyle =
+    editingDevice === "desktop" ? desktopFramedStyle : mobileFramedStyle;
 
   const desktopHeroUsesCover = framing.desktopFit === "cover";
 
-  const setDesktopHeroFit = (mode: DesktopHeroFitMode) => {
-    emitFraming({ desktopFit: mode });
-  };
+  // Match the interactive drag stage aspect ratio to the device being edited
+  const stageAspectClass =
+    previewContext?.mode === "hero"
+      ? editingDevice === "mobile"
+        ? "aspect-[9/16] max-w-[235px]"
+        : "aspect-[16/10] w-full"
+      : effectiveAspectClass;
+
+  const stageUsesContain =
+    previewContext?.mode === "hero" &&
+    editingDevice === "desktop" &&
+    !desktopHeroUsesCover;
 
   return (
     <div className="space-y-5">
@@ -384,58 +462,194 @@ export function ImageUploaderWithFocalPoint({
       {/* Interactive Framing Studio & Live Site Preview */}
       {imageUrl && (
         <div className="border border-[#E5E1DA] bg-[#FAF9F6] p-4 sm:p-6 space-y-6">
-          {/* Top Studio Bar: Instructions + Presets + Reset */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b border-[#E5E1DA]">
-            <div className="space-y-0.5">
-              <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-[#9E8765] font-medium">
-                <Sparkles size={12} />
-                <span>Estúdio de Enquadramento &amp; Preview Ao Vivo</span>
-              </p>
-              <p className="text-xs text-[#6B6660] font-light">
-                <strong>Arraste a foto</strong> dentro do quadro (ou clique no
-                ponto principal) e ajuste o <strong>Zoom</strong> vendo ao lado
-                como ficará publicado no site.
-              </p>
-            </div>
-
-            {/* Quick Presets */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {QUICK_PRESETS.map((preset) => {
-                const isCurrent =
-                  Math.abs(framing.x - preset.x) <= 2 &&
-                  Math.abs(framing.y - preset.y) <= 2;
-                return (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() => emitFraming({ x: preset.x, y: preset.y })}
-                    className={`px-2.5 py-1.5 text-[9px] uppercase tracking-[0.18em] border transition-colors cursor-pointer ${
-                      isCurrent
-                        ? "border-[#181716] bg-[#181716] text-white"
-                        : "border-[#D8D3CB] bg-white text-[#6B6660] hover:border-[#9E8765] hover:text-[#181716]"
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                );
-              })}
+          {/* INDEPENDENT DEVICE TARGET SELECTOR: CELULAR vs COMPUTADOR */}
+          <div className="space-y-3 pb-4 border-b border-[#E5E1DA]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="space-y-0.5">
+                <p className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-[#9E8765] font-medium">
+                  <Sparkles size={12} />
+                  <span>
+                    Enquadramento Independente · Celular &amp; Computador Separados
+                  </span>
+                </p>
+                <p className="text-xs text-[#6B6660] font-light">
+                  Escolha abaixo qual tela deseja ajustar.{" "}
+                  <strong>
+                    Alterar o Celular não afeta o Computador, e alterar o
+                    Computador não afeta o Celular.
+                  </strong>
+                </p>
+              </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  emitFraming({
-                    x: 50,
-                    y: 0,
-                    zoom: 1,
-                    desktopFit: "auto",
-                  })
+                onClick={copyFromOtherDevice}
+                title={
+                  editingDevice === "mobile"
+                    ? "Copiar coordenadas do Computador para o Celular"
+                    : "Copiar coordenadas do Celular para o Computador"
                 }
-                title="Restaurar enquadramento padrão (50% 0% · 1.0×)"
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[9px] uppercase tracking-[0.18em] border border-[#D8D3CB] bg-white text-[#8C8780] hover:text-[#181716] hover:border-[#181716] transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#D8D3CB] bg-white text-[9px] uppercase tracking-[0.18em] text-[#6B6660] hover:text-[#181716] hover:border-[#181716] transition-colors shrink-0 cursor-pointer"
               >
-                <RotateCcw size={11} />
-                <span>Resetar</span>
+                <Copy size={11} />
+                <span>
+                  {editingDevice === "mobile"
+                    ? "Copiar do PC → Celular"
+                    : "Copiar do Celular → PC"}
+                </span>
               </button>
+            </div>
+
+            {/* Prominent Two-Column Device Switcher */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setEditingDevice("mobile")}
+                className={`p-3.5 border text-left transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                  editingDevice === "mobile"
+                    ? "border-[#181716] bg-[#181716] text-white shadow-sm"
+                    : "border-[#D8D3CB] bg-white text-[#4A453E] hover:border-[#9E8765]"
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Smartphone
+                    size={18}
+                    className={
+                      editingDevice === "mobile"
+                        ? "text-[#D4AF7A] shrink-0"
+                        : "text-[#9E8765] shrink-0"
+                    }
+                  />
+                  <div className="min-w-0">
+                    <span className="block text-[10px] uppercase tracking-[0.2em] font-semibold">
+                      1. Ajustar Celular (Mobile)
+                    </span>
+                    <span
+                      className={`block text-[11px] font-mono mt-0.5 ${
+                        editingDevice === "mobile"
+                          ? "text-white/80"
+                          : "text-[#8C8780]"
+                      }`}
+                    >
+                      X: {Math.round(framing.x)}% · Y: {Math.round(framing.y)}% ·
+                      Zoom: {Math.round(framing.zoom * 100)}%
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`px-2 py-0.5 text-[8px] uppercase tracking-[0.2em] shrink-0 border ${
+                    editingDevice === "mobile"
+                      ? "border-[#D4AF7A] text-[#D4AF7A]"
+                      : "border-[#E5E1DA] text-[#8C8780]"
+                  }`}
+                >
+                  {editingDevice === "mobile" ? "Editando" : "Selecionar"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setEditingDevice("desktop")}
+                className={`p-3.5 border text-left transition-all flex items-center justify-between gap-3 cursor-pointer ${
+                  editingDevice === "desktop"
+                    ? "border-[#181716] bg-[#181716] text-white shadow-sm"
+                    : "border-[#D8D3CB] bg-white text-[#4A453E] hover:border-[#9E8765]"
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Monitor
+                    size={18}
+                    className={
+                      editingDevice === "desktop"
+                        ? "text-[#D4AF7A] shrink-0"
+                        : "text-[#9E8765] shrink-0"
+                    }
+                  />
+                  <div className="min-w-0">
+                    <span className="block text-[10px] uppercase tracking-[0.2em] font-semibold">
+                      2. Ajustar Computador (PC)
+                    </span>
+                    <span
+                      className={`block text-[11px] font-mono mt-0.5 ${
+                        editingDevice === "desktop"
+                          ? "text-white/80"
+                          : "text-[#8C8780]"
+                      }`}
+                    >
+                      X: {Math.round(framing.desktop.x)}% · Y:{" "}
+                      {Math.round(framing.desktop.y)}% · Zoom:{" "}
+                      {Math.round(framing.desktop.zoom * 100)}%
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`px-2 py-0.5 text-[8px] uppercase tracking-[0.2em] shrink-0 border ${
+                    editingDevice === "desktop"
+                      ? "border-[#D4AF7A] text-[#D4AF7A]"
+                      : "border-[#E5E1DA] text-[#8C8780]"
+                  }`}
+                >
+                  {editingDevice === "desktop" ? "Editando" : "Selecionar"}
+                </span>
+              </button>
+            </div>
+
+            {/* Quick Presets for Active Device */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <span className="text-[9px] uppercase tracking-[0.2em] text-[#8C8780]">
+                Atalhos rápidos para{" "}
+                <strong className="text-[#181716]">
+                  {editingDevice === "mobile" ? "Celular" : "Computador (PC)"}
+                </strong>
+                :
+              </span>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {QUICK_PRESETS.map((preset) => {
+                  const isCurrent =
+                    Math.abs(activeViewport.x - preset.x) <= 2 &&
+                    Math.abs(activeViewport.y - preset.y) <= 2;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() =>
+                        emitActiveViewportFraming({
+                          x: preset.x,
+                          y: preset.y,
+                        })
+                      }
+                      className={`px-2.5 py-1 text-[9px] uppercase tracking-[0.18em] border transition-colors cursor-pointer ${
+                        isCurrent
+                          ? "border-[#181716] bg-[#181716] text-white"
+                          : "border-[#D8D3CB] bg-white text-[#6B6660] hover:border-[#9E8765] hover:text-[#181716]"
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    emitActiveViewportFraming({
+                      x: 50,
+                      y: editingDevice === "desktop" ? 50 : 0,
+                      zoom: 1,
+                    })
+                  }
+                  title={`Restaurar padrão apenas do ${
+                    editingDevice === "mobile" ? "Celular" : "Computador"
+                  }`}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[9px] uppercase tracking-[0.18em] border border-[#D8D3CB] bg-white text-[#8C8780] hover:text-[#181716] hover:border-[#181716] transition-colors cursor-pointer"
+                >
+                  <RotateCcw size={11} />
+                  <span>
+                    Resetar {editingDevice === "mobile" ? "Celular" : "PC"}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -446,9 +660,15 @@ export function ImageUploaderWithFocalPoint({
                 <span className="inline-flex items-center gap-1.5">
                   <Move size={12} className="text-[#9E8765]" />
                   <span>
-                    Arraste ou clique na foto ({Math.round(framing.x)}%{" "}
-                    {Math.round(framing.y)}% ·{" "}
-                    {Math.round(framing.zoom * 100)}%)
+                    Palco{" "}
+                    <strong className="text-[#181716]">
+                      {editingDevice === "mobile"
+                        ? "Celular"
+                        : "Computador (PC)"}
+                    </strong>{" "}
+                    ({Math.round(activeViewport.x)}%{" "}
+                    {Math.round(activeViewport.y)}% ·{" "}
+                    {Math.round(activeViewport.zoom * 100)}%)
                   </span>
                 </span>
 
@@ -466,11 +686,70 @@ export function ImageUploaderWithFocalPoint({
                 </button>
               </div>
 
+              {/* Hero Desktop Mode Selector (Shown right above the stage when editing Desktop Hero) */}
+              {previewContext?.mode === "hero" &&
+                editingDevice === "desktop" && (
+                  <div className="bg-white border border-[#E5E1DA] p-3 space-y-2">
+                    <span className="block text-[9px] uppercase tracking-[0.2em] text-[#6B6660]">
+                      Modo de Enquadramento no Computador (Monitor 16:9)
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDesktopHeroFit("auto")}
+                        className={`p-2.5 border text-left transition-colors cursor-pointer ${
+                          !desktopHeroUsesCover
+                            ? "border-[#181716] bg-[#181716] text-white"
+                            : "border-[#E5E1DA] bg-[#FAF9F6] text-[#6B6660] hover:border-[#9E8765]"
+                        }`}
+                      >
+                        <span className="block text-[9px] uppercase tracking-[0.18em] font-medium">
+                          Foto Inteira + Atmosfera
+                        </span>
+                        <span
+                          className={`block text-[10px] mt-0.5 ${
+                            !desktopHeroUsesCover
+                              ? "text-white/75"
+                              : "text-[#8C8780]"
+                          }`}
+                        >
+                          Mostra a foto inteira sem cortar (mova X ou dê Zoom)
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDesktopHeroFit("cover")}
+                        className={`p-2.5 border text-left transition-colors cursor-pointer ${
+                          desktopHeroUsesCover
+                            ? "border-[#181716] bg-[#181716] text-white"
+                            : "border-[#E5E1DA] bg-[#FAF9F6] text-[#6B6660] hover:border-[#9E8765]"
+                        }`}
+                      >
+                        <span className="block text-[9px] uppercase tracking-[0.18em] font-medium">
+                          Preencher Tela Cheia
+                        </span>
+                        <span
+                          className={`block text-[10px] mt-0.5 ${
+                            desktopHeroUsesCover
+                              ? "text-white/75"
+                              : "text-[#8C8780]"
+                          }`}
+                        >
+                          Preenche 100% da tela e permite mover X e Y livremente
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
               {/* Interactive Drag / Click Canvas */}
               <div
                 ref={stageRef}
                 tabIndex={0}
-                aria-label="Palco de enquadramento da fotografia — arraste com o mouse ou use as setas do teclado para posicionar a imagem"
+                aria-label={`Palco de enquadramento para ${
+                  editingDevice === "mobile" ? "Celular" : "Computador"
+                } — arraste com o mouse ou use as setas do teclado`}
                 onPointerDown={handleStagePointerDown}
                 onPointerMove={handleStagePointerMove}
                 onPointerUp={handleStagePointerUp}
@@ -481,21 +760,34 @@ export function ImageUploaderWithFocalPoint({
                   WebkitUserSelect: "none",
                   userSelect: "none",
                 }}
-                className={`relative w-full ${
-                  previewContext?.mode === "hero"
-                    ? "aspect-[4/5] max-h-[380px]"
-                    : effectiveAspectClass
-                } max-h-[400px] mx-auto bg-[#141312] overflow-hidden border border-[#D8D3CB] focus:outline-2 focus:outline-[#9E8765] ${
+                className={`relative ${stageAspectClass} max-h-[390px] mx-auto bg-[#141312] overflow-hidden border-2 border-[#9E8765] focus:outline-2 focus:outline-[#181716] ${
                   isDraggingStage ? "cursor-grabbing" : "cursor-grab"
                 }`}
               >
+                {/* Ambient Blur Layer when editing Desktop Hero in contain mode */}
+                {stageUsesContain && (
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <Image
+                      src={imageUrl}
+                      alt=""
+                      fill
+                      sizes="360px"
+                      className="object-cover object-center blur-xl opacity-35 scale-110"
+                      quality={75}
+                    />
+                    <div className="absolute inset-0 bg-black/40" />
+                  </div>
+                )}
+
                 <Image
                   src={imageUrl}
                   alt="Palco interativo de enquadramento"
                   fill
                   sizes="(max-width: 1024px) 100vw, 480px"
-                  style={framedStyle}
-                  className="object-cover pointer-events-none transition-transform duration-75"
+                  style={activeStageStyle}
+                  className={`${
+                    stageUsesContain ? "object-contain" : "object-cover"
+                  } pointer-events-none transition-transform duration-75 z-5`}
                   quality={85}
                 />
 
@@ -520,7 +812,10 @@ export function ImageUploaderWithFocalPoint({
                 {/* Focal Point Crosshair Marker */}
                 <div
                   aria-hidden="true"
-                  style={{ left: `${framing.x}%`, top: `${framing.y}%` }}
+                  style={{
+                    left: `${activeViewport.x}%`,
+                    top: `${activeViewport.y}%`,
+                  }}
                   className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20 transition-all duration-75"
                 >
                   <div className="w-8 h-8 rounded-full border-2 border-white shadow-[0_0_0_2px_rgba(158,135,101,0.95),0_4px_12px_rgba(0,0,0,0.45)] bg-[#9E8765]/35 flex items-center justify-center">
@@ -528,28 +823,50 @@ export function ImageUploaderWithFocalPoint({
                   </div>
                 </div>
 
+                {/* Top Device Badge */}
+                <div
+                  aria-hidden="true"
+                  className="absolute top-2.5 left-2.5 z-20 bg-[#181716]/85 backdrop-blur-xs text-[#D4AF7A] px-2.5 py-1 text-[8px] font-sans tracking-[0.2em] uppercase pointer-events-none border border-[#9E8765]/50"
+                >
+                  {editingDevice === "mobile"
+                    ? "📱 Editando Celular"
+                    : "🖥️ Editando Computador"}
+                </div>
+
                 {/* Live Floating Coordinate Pill */}
                 <div
                   aria-hidden="true"
                   className="absolute bottom-2.5 left-2.5 z-20 bg-black/75 backdrop-blur-xs text-white px-2.5 py-1 text-[9px] font-mono tracking-wider uppercase pointer-events-none"
                 >
-                  X: {Math.round(framing.x)}% · Y: {Math.round(framing.y)}% ·
-                  Zoom: {Math.round(framing.zoom * 100)}%
+                  X: {Math.round(activeViewport.x)}% · Y:{" "}
+                  {Math.round(activeViewport.y)}% · Zoom:{" "}
+                  {Math.round(activeViewport.zoom * 100)}%
                 </div>
               </div>
 
-              {/* Precision Controls: Zoom + Horizontal X + Vertical Y */}
+              {/* Precision Controls: Zoom + Horizontal X + Vertical Y for Active Device */}
               <div className="bg-white border border-[#E5E1DA] p-4 space-y-3.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#F2EFE9]">
+                  <span className="text-[9px] uppercase tracking-[0.2em] text-[#9E8765] font-medium">
+                    Ajuste Fino Exclusivo para{" "}
+                    {editingDevice === "mobile"
+                      ? "Celular (Mobile)"
+                      : "Computador (PC)"}
+                  </span>
+                </div>
+
                 {/* Zoom Slider */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-[#6B6660]">
                     <span className="inline-flex items-center gap-1.5">
                       <ZoomIn size={12} className="text-[#9E8765]" />
-                      <span>Zoom / Aproximação do Corte</span>
+                      <span>
+                        Zoom ({editingDevice === "mobile" ? "Celular" : "PC"})
+                      </span>
                     </span>
                     <span className="font-mono text-[#181716] font-medium">
-                      {Math.round(framing.zoom * 100)}% (
-                      {framing.zoom.toFixed(2)}×)
+                      {Math.round(activeViewport.zoom * 100)}% (
+                      {activeViewport.zoom.toFixed(2)}×)
                     </span>
                   </div>
 
@@ -557,8 +874,8 @@ export function ImageUploaderWithFocalPoint({
                     <button
                       type="button"
                       onClick={() =>
-                        emitFraming({
-                          zoom: clampFramingZoom(framing.zoom - 0.1, 1),
+                        emitActiveViewportFraming({
+                          zoom: clampFramingZoom(activeViewport.zoom - 0.1, 1),
                         })
                       }
                       aria-label="Reduzir zoom"
@@ -572,9 +889,9 @@ export function ImageUploaderWithFocalPoint({
                       min={1}
                       max={2.4}
                       step={0.05}
-                      value={framing.zoom}
+                      value={activeViewport.zoom}
                       onChange={(e) =>
-                        emitFraming({
+                        emitActiveViewportFraming({
                           zoom: Number.parseFloat(e.target.value),
                         })
                       }
@@ -585,8 +902,8 @@ export function ImageUploaderWithFocalPoint({
                     <button
                       type="button"
                       onClick={() =>
-                        emitFraming({
-                          zoom: clampFramingZoom(framing.zoom + 0.1, 1),
+                        emitActiveViewportFraming({
+                          zoom: clampFramingZoom(activeViewport.zoom + 0.1, 1),
                         })
                       }
                       aria-label="Aumentar zoom"
@@ -601,9 +918,12 @@ export function ImageUploaderWithFocalPoint({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#F2EFE9]">
                   <div>
                     <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.18em] text-[#6B6660] mb-1">
-                      <span>Posição Horizontal (X)</span>
+                      <span>
+                        Horizontal X (
+                        {editingDevice === "mobile" ? "Celular" : "PC"})
+                      </span>
                       <span className="font-mono text-[#181716]">
-                        {Math.round(framing.x)}%
+                        {Math.round(activeViewport.x)}%
                       </span>
                     </div>
                     <input
@@ -611,9 +931,11 @@ export function ImageUploaderWithFocalPoint({
                       min={0}
                       max={100}
                       step={0.5}
-                      value={framing.x}
+                      value={activeViewport.x}
                       onChange={(e) =>
-                        emitFraming({ x: Number.parseFloat(e.target.value) })
+                        emitActiveViewportFraming({
+                          x: Number.parseFloat(e.target.value),
+                        })
                       }
                       aria-label="Posição horizontal X"
                       className="w-full accent-[#181716] cursor-pointer"
@@ -622,9 +944,12 @@ export function ImageUploaderWithFocalPoint({
 
                   <div>
                     <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.18em] text-[#6B6660] mb-1">
-                      <span>Posição Vertical (Y)</span>
+                      <span>
+                        Vertical Y (
+                        {editingDevice === "mobile" ? "Celular" : "PC"})
+                      </span>
                       <span className="font-mono text-[#181716]">
-                        {Math.round(framing.y)}%
+                        {Math.round(activeViewport.y)}%
                       </span>
                     </div>
                     <input
@@ -632,71 +957,17 @@ export function ImageUploaderWithFocalPoint({
                       min={0}
                       max={100}
                       step={0.5}
-                      value={framing.y}
+                      value={activeViewport.y}
                       onChange={(e) =>
-                        emitFraming({ y: Number.parseFloat(e.target.value) })
+                        emitActiveViewportFraming({
+                          y: Number.parseFloat(e.target.value),
+                        })
                       }
                       aria-label="Posição vertical Y"
                       className="w-full accent-[#181716] cursor-pointer"
                     />
                   </div>
                 </div>
-
-                {/* Hero Desktop Fit Mode Selector */}
-                {previewContext?.mode === "hero" && (
-                  <div className="pt-2.5 border-t border-[#F2EFE9] space-y-2">
-                    <span className="block text-[9px] uppercase tracking-[0.2em] text-[#6B6660]">
-                      Exibição no Computador (Monitor Widescreen)
-                    </span>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setDesktopHeroFit("auto")}
-                        className={`p-2 border text-left transition-colors cursor-pointer ${
-                          !desktopHeroUsesCover
-                            ? "border-[#181716] bg-[#181716] text-white"
-                            : "border-[#E5E1DA] bg-[#FAF9F6] text-[#6B6660] hover:border-[#9E8765]"
-                        }`}
-                      >
-                        <span className="block text-[9px] uppercase tracking-[0.18em] font-medium">
-                          Foto Inteira + Atmosfera
-                        </span>
-                        <span
-                          className={`block text-[10px] mt-0.5 ${
-                            !desktopHeroUsesCover
-                              ? "text-white/75"
-                              : "text-[#8C8780]"
-                          }`}
-                        >
-                          Preserva o corpo todo no PC
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setDesktopHeroFit("cover")}
-                        className={`p-2 border text-left transition-colors cursor-pointer ${
-                          desktopHeroUsesCover
-                            ? "border-[#181716] bg-[#181716] text-white"
-                            : "border-[#E5E1DA] bg-[#FAF9F6] text-[#6B6660] hover:border-[#9E8765]"
-                        }`}
-                      >
-                        <span className="block text-[9px] uppercase tracking-[0.18em] font-medium">
-                          Preencher Tela Cheia
-                        </span>
-                        <span
-                          className={`block text-[10px] mt-0.5 ${
-                            desktopHeroUsesCover
-                              ? "text-white/75"
-                              : "text-[#8C8780]"
-                          }`}
-                        >
-                          Usa o seu corte X/Y no PC
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -707,7 +978,7 @@ export function ImageUploaderWithFocalPoint({
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-[10px] uppercase tracking-[0.2em] text-[#6B6660] font-medium">
-                      Preview do Site Ao Vivo (Capa Hero)
+                      Preview do Site Ao Vivo (Celular &amp; PC Independentes)
                     </span>
 
                     <div className="inline-flex border border-[#D8D3CB] bg-white">
@@ -724,7 +995,10 @@ export function ImageUploaderWithFocalPoint({
                       </button>
                       <button
                         type="button"
-                        onClick={() => setHeroPreviewTab("mobile")}
+                        onClick={() => {
+                          setHeroPreviewTab("mobile");
+                          setEditingDevice("mobile");
+                        }}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] border-l border-[#D8D3CB] cursor-pointer ${
                           heroPreviewTab === "mobile"
                             ? "bg-[#181716] text-white"
@@ -736,7 +1010,10 @@ export function ImageUploaderWithFocalPoint({
                       </button>
                       <button
                         type="button"
-                        onClick={() => setHeroPreviewTab("desktop")}
+                        onClick={() => {
+                          setHeroPreviewTab("desktop");
+                          setEditingDevice("desktop");
+                        }}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] border-l border-[#D8D3CB] cursor-pointer ${
                           heroPreviewTab === "desktop"
                             ? "bg-[#181716] text-white"
@@ -756,23 +1033,30 @@ export function ImageUploaderWithFocalPoint({
                         : "grid-cols-1"
                     }`}
                   >
-                    {/* Mobile 9:16 Live Hero Simulator */}
+                    {/* Mobile 9:16 Live Hero Simulator (Always uses mobileFramedStyle) */}
                     {(heroPreviewTab === "split" ||
                       heroPreviewTab === "mobile") && (
                       <div
-                        className={
+                        onClick={() => setEditingDevice("mobile")}
+                        className={`cursor-pointer ${
                           heroPreviewTab === "split"
                             ? "sm:col-span-5"
                             : "max-w-[240px] mx-auto w-full"
-                        }
+                        }`}
                       >
-                        <div className="relative w-full aspect-[9/16] bg-[#141312] overflow-hidden border border-[#D8D3CB] shadow-md">
+                        <div
+                          className={`relative w-full aspect-[9/16] bg-[#141312] overflow-hidden shadow-md transition-all ${
+                            editingDevice === "mobile"
+                              ? "ring-2 ring-[#9E8765] border border-[#9E8765]"
+                              : "border border-[#D8D3CB] opacity-90 hover:opacity-100"
+                          }`}
+                        >
                           <Image
                             src={imageUrl}
                             alt="Simulação Hero Celular"
                             fill
                             sizes="240px"
-                            style={framedStyle}
+                            style={mobileFramedStyle}
                             className="object-cover brightness-[0.94] pointer-events-none"
                             quality={75}
                           />
@@ -813,23 +1097,33 @@ export function ImageUploaderWithFocalPoint({
                             </p>
                           </div>
                         </div>
-                        <span className="block text-[9px] uppercase tracking-[0.2em] text-[#8C8780] mt-1.5 text-center">
-                          Celular Ao Vivo (9:16)
+                        <span className="block text-[9px] uppercase tracking-[0.18em] text-[#6B6660] mt-1.5 text-center">
+                          📱 Celular (9:16) ·{" "}
+                          {editingDevice === "mobile"
+                            ? "Editando Agora"
+                            : "Clique p/ Editar"}
                         </span>
                       </div>
                     )}
 
-                    {/* Desktop 16:9 Live Hero Simulator */}
+                    {/* Desktop 16:9 Live Hero Simulator (Always uses desktopFramedStyle) */}
                     {(heroPreviewTab === "split" ||
                       heroPreviewTab === "desktop") && (
                       <div
-                        className={
+                        onClick={() => setEditingDevice("desktop")}
+                        className={`cursor-pointer ${
                           heroPreviewTab === "split"
                             ? "sm:col-span-7"
                             : "w-full"
-                        }
+                        }`}
                       >
-                        <div className="relative w-full aspect-[16/10] bg-[#141312] overflow-hidden border border-[#D8D3CB] shadow-md">
+                        <div
+                          className={`relative w-full aspect-[16/10] bg-[#141312] overflow-hidden shadow-md transition-all ${
+                            editingDevice === "desktop"
+                              ? "ring-2 ring-[#9E8765] border border-[#9E8765]"
+                              : "border border-[#D8D3CB] opacity-90 hover:opacity-100"
+                          }`}
+                        >
                           {/* Ambient Blurred Layer when in contain/auto mode */}
                           {!desktopHeroUsesCover && (
                             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -852,7 +1146,7 @@ export function ImageUploaderWithFocalPoint({
                               alt="Simulação Hero Computador"
                               fill
                               sizes="360px"
-                              style={framedStyle}
+                              style={desktopFramedStyle}
                               className={`${
                                 desktopHeroUsesCover
                                   ? "object-cover"
@@ -898,12 +1192,15 @@ export function ImageUploaderWithFocalPoint({
                             </span>
                           </div>
                         </div>
-                        <span className="block text-[9px] uppercase tracking-[0.2em] text-[#8C8780] mt-1.5 text-center">
-                          Computador Ao Vivo (
+                        <span className="block text-[9px] uppercase tracking-[0.18em] text-[#6B6660] mt-1.5 text-center">
+                          🖥️ Computador (
                           {desktopHeroUsesCover
                             ? "Tela Cheia"
-                            : "Foto Inteira + Atmosfera"}
-                          )
+                            : "Foto Inteira"}
+                          ) ·{" "}
+                          {editingDevice === "desktop"
+                            ? "Editando Agora"
+                            : "Clique p/ Editar"}
                         </span>
                       </div>
                     )}
@@ -916,7 +1213,7 @@ export function ImageUploaderWithFocalPoint({
                 <div className="space-y-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-[10px] uppercase tracking-[0.2em] text-[#6B6660] font-medium">
-                      Preview do Card Ao Vivo no Portfólio
+                      Preview Ao Vivo ({editingDevice === "mobile" ? "📱 Celular" : "🖥️ Computador"})
                     </span>
 
                     <div className="inline-flex border border-[#D8D3CB] bg-white">
@@ -941,7 +1238,7 @@ export function ImageUploaderWithFocalPoint({
                         }`}
                       >
                         <LayoutGrid size={10} />
-                        <span>Na Grade + Mobile</span>
+                        <span>Na Grade (PC)</span>
                       </button>
                     </div>
                   </div>
@@ -981,44 +1278,85 @@ export function ImageUploaderWithFocalPoint({
                   )}
 
                   {portfolioPreviewTab === "card" ? (
-                    /* Authentic Portfolio Card Simulation with Editorial Caption Underneath */
-                    <div className="bg-white border border-[#E5E1DA] p-5 shadow-xs">
-                      <div className="max-w-[270px] mx-auto">
+                    /* Side-by-Side Mobile & Desktop Portfolio Card Comparison */
+                    <div className="bg-white border border-[#E5E1DA] p-4 shadow-xs">
+                      <div className="grid grid-cols-2 gap-4 items-start">
+                        {/* Mobile Card Preview */}
                         <div
-                          className={`relative w-full ${effectiveAspectClass} overflow-hidden bg-[#FAF9F6]`}
+                          onClick={() => setEditingDevice("mobile")}
+                          className={`p-2 border transition-all cursor-pointer ${
+                            editingDevice === "mobile"
+                              ? "border-[#9E8765] ring-1 ring-[#9E8765] bg-[#FAF9F6]"
+                              : "border-transparent opacity-85 hover:opacity-100"
+                          }`}
                         >
-                          <Image
-                            src={imageUrl}
-                            alt="Preview do card no site"
-                            fill
-                            sizes="280px"
-                            style={framedStyle}
-                            className="object-cover pointer-events-none"
-                            quality={85}
-                          />
+                          <span className="block text-[8px] uppercase tracking-[0.2em] text-[#9E8765] mb-1.5 font-medium">
+                            📱 Card no Celular
+                          </span>
+                          <div
+                            className={`relative w-full ${effectiveAspectClass} overflow-hidden bg-[#FAF9F6]`}
+                          >
+                            <Image
+                              src={imageUrl}
+                              alt="Preview do card no celular"
+                              fill
+                              sizes="200px"
+                              style={mobileFramedStyle}
+                              className="object-cover pointer-events-none"
+                              quality={85}
+                            />
+                          </div>
+                          <div className="pt-2.5 text-center">
+                            <p className="text-[7px] uppercase tracking-[0.25em] text-[#8C8780] truncate">
+                              {previewContext.location || "France"}
+                            </p>
+                            <h4 className="font-serif italic text-sm text-[#181716] font-light truncate">
+                              {previewContext.title || "Título da História"}
+                            </h4>
+                          </div>
                         </div>
 
-                        {/* Authentic Jose Villa Editorial Caption Underneath */}
-                        <div className="pt-3.5 text-left">
-                          <p className="text-[8px] uppercase tracking-[0.3em] text-[#8C8780] font-sans">
-                            {previewContext.location || "France"}
-                          </p>
-                          <h4 className="font-serif italic text-lg text-[#181716] font-light mt-0.5 truncate">
-                            {previewContext.title || "Título da História"}
-                          </h4>
-                          {previewContext.camera && (
-                            <p className="text-[9px] font-mono text-[#9C968F] mt-0.5 tracking-wider uppercase truncate">
-                              {previewContext.camera.split("·")[0]}
+                        {/* Desktop Card Preview */}
+                        <div
+                          onClick={() => setEditingDevice("desktop")}
+                          className={`p-2 border transition-all cursor-pointer ${
+                            editingDevice === "desktop"
+                              ? "border-[#9E8765] ring-1 ring-[#9E8765] bg-[#FAF9F6]"
+                              : "border-transparent opacity-85 hover:opacity-100"
+                          }`}
+                        >
+                          <span className="block text-[8px] uppercase tracking-[0.2em] text-[#9E8765] mb-1.5 font-medium">
+                            🖥️ Card no Computador
+                          </span>
+                          <div
+                            className={`relative w-full ${effectiveAspectClass} overflow-hidden bg-[#FAF9F6]`}
+                          >
+                            <Image
+                              src={imageUrl}
+                              alt="Preview do card no computador"
+                              fill
+                              sizes="200px"
+                              style={desktopFramedStyle}
+                              className="object-cover pointer-events-none"
+                              quality={85}
+                            />
+                          </div>
+                          <div className="pt-2.5 text-left">
+                            <p className="text-[7px] uppercase tracking-[0.25em] text-[#8C8780] truncate">
+                              {previewContext.location || "France"}
                             </p>
-                          )}
+                            <h4 className="font-serif italic text-sm text-[#181716] font-light truncate">
+                              {previewContext.title || "Título da História"}
+                            </h4>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    /* Grid Context + Mobile 9:16 Comparison */
+                    /* Grid Context (Desktop 12 Columns) */
                     <div className="bg-white border border-[#E5E1DA] p-4 space-y-3">
                       <p className="text-[9px] uppercase tracking-[0.2em] text-[#8C8780]">
-                        Proporção na fileira de 12 colunas (
+                        Proporção na fileira de 12 colunas no PC (
                         {previewContext.colSpan === "lg:col-span-4"
                           ? "1/3 da Linha"
                           : previewContext.colSpan === "lg:col-span-8"
@@ -1048,7 +1386,7 @@ export function ImageUploaderWithFocalPoint({
                               alt="Card na grade"
                               fill
                               sizes="220px"
-                              style={framedStyle}
+                              style={desktopFramedStyle}
                               className="object-cover pointer-events-none"
                               quality={75}
                             />
@@ -1086,7 +1424,7 @@ export function ImageUploaderWithFocalPoint({
               {(!previewContext || previewContext.mode === "about") && (
                 <div className="space-y-3">
                   <span className="block text-[10px] uppercase tracking-[0.2em] text-[#6B6660] font-medium">
-                    Preview Ao Vivo na Página
+                    Preview Ao Vivo ({editingDevice === "mobile" ? "📱 Celular" : "🖥️ Computador"})
                   </span>
 
                   <div className="bg-white border border-[#E5E1DA] p-5">
@@ -1100,13 +1438,13 @@ export function ImageUploaderWithFocalPoint({
                             alt="Preview do retrato"
                             fill
                             sizes="180px"
-                            style={framedStyle}
+                            style={activeStageStyle}
                             className="object-cover pointer-events-none"
                             quality={75}
                           />
                         </div>
                         <span className="block text-[8px] uppercase tracking-[0.2em] text-[#8C8780] mt-1 text-center">
-                          Moldura 4:5
+                          Moldura 4:5 ({editingDevice === "mobile" ? "Celular" : "PC"})
                         </span>
                       </div>
 

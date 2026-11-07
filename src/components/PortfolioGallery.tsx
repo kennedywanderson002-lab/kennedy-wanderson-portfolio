@@ -8,7 +8,7 @@ import {
   legacyObjectPositionToFocalPoint,
   type CmsPortfolioProject,
 } from "@/lib/cms/types";
-import { getFramedImageStyle } from "@/lib/cms/framing";
+import { getResponsiveFramedImageStyle } from "@/lib/cms/framing";
 import { LightboxModal } from "./LightboxModal";
 
 interface PortfolioGalleryProps {
@@ -138,8 +138,8 @@ export function PortfolioGallery({ projects }: PortfolioGalleryProps) {
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
                       loading="lazy"
-                      style={getFramedImageStyle(focalPoint)}
-                      className="object-cover"
+                      style={getResponsiveFramedImageStyle(focalPoint)}
+                      className="cms-framed-image object-cover"
                       quality={90}
                     />
                   </div>

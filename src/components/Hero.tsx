@@ -5,7 +5,10 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { defaultHeroSlides, type HeroSlideData } from "@/data/hero";
-import { getFramedImageStyle, parseImageFraming } from "@/lib/cms/framing";
+import {
+  getResponsiveFramedImageStyle,
+  parseImageFraming,
+} from "@/lib/cms/framing";
 
 interface HeroProps {
   slides?: HeroSlideData[];
@@ -74,7 +77,7 @@ export function Hero({ slides }: HeroProps) {
               </div>
             )}
 
-            {/* Main Hero Image: Fills 100% of the screen on mobile (object-cover), respects desktopFit ("contain" or "cover") + focalPoint + zoom */}
+            {/* Main Hero Image: Independent Mobile (< 768px) and Desktop (>= 768px) framing via .cms-framed-image */}
             <div className="relative z-10 w-full h-full flex items-center justify-center p-0 overflow-hidden">
               <Image
                 src={slide.image}
@@ -82,8 +85,8 @@ export function Hero({ slides }: HeroProps) {
                 fill
                 sizes="100vw"
                 priority={idx === 0}
-                style={getFramedImageStyle(framing)}
-                className={`w-full h-full object-cover ${
+                style={getResponsiveFramedImageStyle(framing)}
+                className={`cms-framed-image w-full h-full object-cover ${
                   desktopUsesCover ? "md:object-cover" : "md:object-contain"
                 } filter brightness-[0.94] md:brightness-[0.98] transition-transform duration-1000 ease-out`}
                 quality={90}
