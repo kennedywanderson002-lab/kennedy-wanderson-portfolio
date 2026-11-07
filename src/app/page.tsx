@@ -4,6 +4,7 @@ import { PortfolioGallery } from "@/components/PortfolioGallery";
 import { AboutSection } from "@/components/AboutSection";
 import { ContactSection } from "@/components/ContactSection";
 import { Footer } from "@/components/Footer";
+import { AnalyticsTracker } from "@/components/AnalyticsTracker";
 import { LanguageProvider } from "@/context/LanguageContext";
 import {
   getCachedHeroSlides,
@@ -20,6 +21,7 @@ export default async function Home() {
 
   return (
     <LanguageProvider initialTranslations={siteSettings.translations}>
+      <AnalyticsTracker />
       {/* Sticky Editorial Navbar & Left-to-Right Modal Drawer (outside <main>) */}
       <Navbar
         contactEmail={siteSettings.contactEmail}

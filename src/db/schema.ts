@@ -240,3 +240,31 @@ export const contactInquiries = pgTable(
   ]
 );
 
+// ==========================================================
+// 6. FIRST-PARTY SITE ANALYTICS & ENGAGEMENT EVENTS
+// ==========================================================
+
+export const siteAnalyticsEvents = pgTable(
+  "site_analytics_events",
+  {
+    id: text("id").primaryKey(),
+    eventType: text("event_type").notNull().default("pageview"), // 'pageview' | 'project_open' | 'whatsapp_click' | 'inquiry_submit'
+    visitorHash: text("visitor_hash").notNull(),
+    pathname: text("pathname").notNull().default("/"),
+    deviceType: text("device_type").notNull().default("desktop"), // 'mobile' | 'desktop' | 'tablet'
+    locale: text("locale").notNull().default("fr"),
+    country: text("country").default(""),
+    city: text("city").default(""),
+    referrerSource: text("referrer_source").notNull().default("Direto"),
+    projectId: text("project_id").default(""),
+    projectTitle: text("project_title").default(""),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("analytics_created_at_idx").on(table.createdAt),
+    index("analytics_event_type_idx").on(table.eventType),
+    index("analytics_visitor_idx").on(table.visitorHash),
+  ]
+);
+
+

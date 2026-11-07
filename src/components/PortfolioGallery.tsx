@@ -9,6 +9,7 @@ import {
   type CmsPortfolioProject,
 } from "@/lib/cms/types";
 import { getResponsiveFramedImageStyle } from "@/lib/cms/framing";
+import { trackSiteEvent } from "./AnalyticsTracker";
 import { LightboxModal } from "./LightboxModal";
 
 interface PortfolioGalleryProps {
@@ -49,6 +50,12 @@ export function PortfolioGallery({ projects }: PortfolioGalleryProps) {
   const openLightbox = (project: PortfolioProject) => {
     const index = activeProjects.findIndex((p) => p.id === project.id);
     setSelectedProjectIndex(index >= 0 ? index : 0);
+    trackSiteEvent({
+      eventType: "project_open",
+      locale,
+      projectId: project.id,
+      projectTitle: project.title.pt || project.title.fr,
+    });
   };
 
   const handlePrev = () => {

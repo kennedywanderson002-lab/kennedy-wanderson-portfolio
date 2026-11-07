@@ -5,17 +5,30 @@ import {
   FolderKanban,
   FileText,
   Inbox,
+  BarChart3,
   CheckCircle2,
   AlertCircle,
   ArrowRight,
 } from "lucide-react";
 import { getAdminOverviewStats } from "@/lib/cms/queries";
+import { getAdminAnalyticsDashboard } from "@/lib/cms/analytics";
 import { SeedInitializerBanner } from "@/components/admin/SeedInitializerBanner";
 
 export default async function AdminDashboardPage() {
-  const stats = await getAdminOverviewStats();
+  const [stats, analytics] = await Promise.all([
+    getAdminOverviewStats(),
+    getAdminAnalyticsDashboard(30),
+  ]);
 
   const cards = [
+    {
+      title: "Análise de Acessos (30d)",
+      value: `${analytics.totalPageviews} visitas`,
+      subtitle: `${analytics.uniqueVisitors} visitantes únicos · Hoje: ${analytics.todayPageviews}`,
+      href: "/admin/analytics",
+      action: "Ver Países, Celular vs PC & Cliques",
+      icon: BarChart3,
+    },
     {
       title: "Slides da Capa (Hero)",
       value: `${stats.visibleHeroCount} / ${stats.heroCount}`,

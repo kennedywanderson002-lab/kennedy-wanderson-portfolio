@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
+  BarChart3,
   Images,
   FolderKanban,
   FileText,
@@ -25,6 +26,11 @@ interface AdminSidebarProps {
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Visão Geral", icon: LayoutDashboard, exact: true },
+  {
+    href: "/admin/analytics",
+    label: "Análise de Acessos",
+    icon: BarChart3,
+  },
   { href: "/admin/hero", label: "Slides da Capa (Hero)", icon: Images },
   {
     href: "/admin/portfolio",

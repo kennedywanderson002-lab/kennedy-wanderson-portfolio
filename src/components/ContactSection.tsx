@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { CheckCircle2, MapPin } from "lucide-react";
 import { submitContactInquiryAction } from "@/lib/cms/actions";
+import { trackSiteEvent } from "./AnalyticsTracker";
 
 interface ContactSectionProps {
   contactEmail?: string;
@@ -58,6 +59,7 @@ export function ContactSection({
       });
 
       setIsSuccess(true);
+      trackSiteEvent({ eventType: "inquiry_submit", locale });
       setFormData({
         fullName: "",
         email: "",
@@ -352,6 +354,9 @@ export function ContactSection({
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackSiteEvent({ eventType: "whatsapp_click", locale })
+              }
               className="hover:text-[#181716] transition-colors"
             >
               WhatsApp (+{cleanWaDigits})
