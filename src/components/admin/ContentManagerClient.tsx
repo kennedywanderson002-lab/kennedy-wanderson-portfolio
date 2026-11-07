@@ -231,6 +231,15 @@ export function ContentManagerClient({
                   imageUrl={aboutPortraitUrl}
                   focalPoint={aboutPortraitFocalPoint}
                   previewAspectClass="aspect-[4/5]"
+                  helperText="Arraste o retrato ou ajuste o zoom para enquadrar perfeitamente ao lado da sua biografia editorial."
+                  previewContext={{
+                    mode: "about",
+                    title: cur.about.title,
+                    subtitle: cur.about.subtitle,
+                    paragraph1: cur.about.paragraph1,
+                    quote: cur.about.quote,
+                    quoteAuthor: cur.about.quoteAuthor,
+                  }}
                   onImageChange={(url, pathname) => {
                     setAboutPortraitUrl(url);
                     setAboutPortraitBlobPathname(pathname ?? null);

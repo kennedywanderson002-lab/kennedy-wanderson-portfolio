@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { defaultHeroSlides, type HeroSlideData } from "@/data/hero";
+import { getFramedImageStyle, parseImageFraming } from "@/lib/cms/framing";
 
 interface HeroProps {
   slides?: HeroSlideData[];
@@ -43,49 +44,58 @@ export function Hero({ slides }: HeroProps) {
       className="relative w-full h-screen h-[100dvh] overflow-hidden bg-[#141312]"
     >
       {/* Slides with Smooth Crossfade */}
-      {activeSlides.map((slide, idx) => (
-        <div
-          key={slide.id || slide.image}
-          className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
-            idx === safeSlideIndex
-              ? "opacity-100 z-10"
-              : "opacity-0 z-0 pointer-events-none"
-          }`}
-        >
-          {/* Ambient Full-Bleed Background (Fills 100% of the screen with glowing atmosphere on Desktop) */}
-          <div className="hidden md:block absolute inset-0 overflow-hidden pointer-events-none">
-            <Image
-              src={slide.image}
-              alt=""
-              fill
-              sizes="100vw"
-              priority={idx === 0}
-              className="object-cover object-center filter blur-3xl opacity-35 scale-110"
-              quality={75}
-            />
-            {/* Subtle atmospheric vignette over ambient layer */}
-            <div className="absolute inset-0 bg-black/40" />
-          </div>
+      {activeSlides.map((slide, idx) => {
+        const framing = parseImageFraming(slide.focalPoint);
+        const desktopUsesCover = framing.desktopFit === "cover";
 
-          {/* Main Hero Image: Fills 100% of the screen on mobile (object-cover), preserves full body on desktop (md:object-contain) */}
-          <div className="relative z-10 w-full h-full flex items-center justify-center p-0">
-            <Image
-              src={slide.image}
-              alt={slide.title[locale]}
-              fill
-              sizes="100vw"
-              priority={idx === 0}
-              style={{ objectPosition: slide.focalPoint || "50% 0%" }}
-              className="w-full h-full object-cover md:object-contain filter brightness-[0.94] md:brightness-[0.98] transition-transform duration-1000 ease-out"
-              quality={90}
-            />
-          </div>
+        return (
+          <div
+            key={slide.id || slide.image}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+              idx === safeSlideIndex
+                ? "opacity-100 z-10"
+                : "opacity-0 z-0 pointer-events-none"
+            }`}
+          >
+            {/* Ambient Full-Bleed Background (Fills 100% of the screen with glowing atmosphere on Desktop when using contain mode) */}
+            {!desktopUsesCover && (
+              <div className="hidden md:block absolute inset-0 overflow-hidden pointer-events-none">
+                <Image
+                  src={slide.image}
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  priority={idx === 0}
+                  className="object-cover object-center filter blur-3xl opacity-35 scale-110"
+                  quality={75}
+                />
+                {/* Subtle atmospheric vignette over ambient layer */}
+                <div className="absolute inset-0 bg-black/40" />
+              </div>
+            )}
 
-          {/* Minimalist Top & Bottom Vignettes for header & caption breathing room */}
-          <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none z-15" />
-          <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/25 to-transparent pointer-events-none z-15" />
-        </div>
-      ))}
+            {/* Main Hero Image: Fills 100% of the screen on mobile (object-cover), respects desktopFit ("contain" or "cover") + focalPoint + zoom */}
+            <div className="relative z-10 w-full h-full flex items-center justify-center p-0 overflow-hidden">
+              <Image
+                src={slide.image}
+                alt={slide.title[locale]}
+                fill
+                sizes="100vw"
+                priority={idx === 0}
+                style={getFramedImageStyle(framing)}
+                className={`w-full h-full object-cover ${
+                  desktopUsesCover ? "md:object-cover" : "md:object-contain"
+                } filter brightness-[0.94] md:brightness-[0.98] transition-transform duration-1000 ease-out`}
+                quality={90}
+              />
+            </div>
+
+            {/* Minimalist Top & Bottom Vignettes for header & caption breathing room */}
+            <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none z-15" />
+            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/70 via-black/25 to-transparent pointer-events-none z-15" />
+          </div>
+        );
+      })}
 
       {/* Thin Minimalist Edge Navigation Arrows (Jose Villa Style) */}
       {activeSlides.length > 1 && (

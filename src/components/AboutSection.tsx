@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
+import { getFramedImageStyle } from "@/lib/cms/framing";
 
 interface AboutSectionProps {
   showPortrait?: boolean;
@@ -55,7 +56,7 @@ export function AboutSection({
                   alt={t.about.title}
                   fill
                   sizes="(max-width: 1024px) 90vw, 420px"
-                  style={{ objectPosition: portraitFocalPoint }}
+                  style={getFramedImageStyle(portraitFocalPoint)}
                   className="object-cover"
                   quality={90}
                 />

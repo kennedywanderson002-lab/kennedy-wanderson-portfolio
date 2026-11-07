@@ -30,6 +30,10 @@ import {
 import { SortableList, DragHandleButton } from "./SortableList";
 import { ImageUploaderWithFocalPoint } from "./ImageUploaderWithFocalPoint";
 import { LocaleTabs } from "./LocaleTabs";
+import {
+  formatFramingSummary,
+  getFramedImageStyle,
+} from "@/lib/cms/framing";
 
 interface PortfolioManagerClientProps {
   initialProjects: CmsPortfolioProject[];
@@ -535,10 +539,13 @@ export function PortfolioManagerClient({
                   alt={project.title.pt || project.title.fr}
                   fill
                   sizes="(max-width: 768px) 100vw, 340px"
-                  style={{ objectPosition: project.focalPoint || "50% 0%" }}
+                  style={getFramedImageStyle(project.focalPoint)}
                   className="object-cover"
                   quality={75}
                 />
+                <span className="absolute bottom-2.5 right-2.5 px-2 py-0.5 bg-black/65 backdrop-blur-xs text-white/90 font-mono text-[9px] tracking-wider">
+                  {formatFramingSummary(project.focalPoint)}
+                </span>
                 {!project.isVisible && (
                   <span className="absolute top-3 left-3 px-2.5 py-1 bg-amber-950/85 text-amber-100 text-[9px] uppercase tracking-[0.2em]">
                     Oculto no Site
@@ -620,7 +627,7 @@ export function PortfolioManagerClient({
           aria-modal="true"
           className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
         >
-          <div className="bg-white border border-[#E5E1DA] w-full max-w-4xl max-h-[94vh] overflow-y-auto p-6 sm:p-10 shadow-2xl space-y-8">
+          <div className="bg-white border border-[#E5E1DA] w-full max-w-5xl max-h-[94vh] overflow-y-auto p-6 sm:p-10 shadow-2xl space-y-8">
             <div className="flex items-center justify-between pb-4 border-b border-[#EFECE6]">
               <div>
                 <p className="text-[9px] uppercase tracking-[0.3em] text-[#9E8765]">
@@ -650,11 +657,31 @@ export function PortfolioManagerClient({
             <form onSubmit={handleSaveProject} className="space-y-8">
               {/* 1. Cover Photo & Focal Point */}
               <ImageUploaderWithFocalPoint
-                label="1. Fotografia de Capa & Ponto Focal"
+                label="1. Fotografia de Capa & Estúdio de Enquadramento"
                 imageUrl={editingForm.coverImageUrl}
                 focalPoint={editingForm.focalPoint}
                 previewAspectClass={editingForm.aspectClass}
-                helperText="Clique sobre o ponto principal da foto (ex: rosto do casal) para garantir que nenhum detalhe importante seja cortado."
+                helperText="Arraste a foto diretamente no quadro ou use o Zoom e os controles abaixo enquanto vê o card real do portfólio à direita."
+                previewContext={{
+                  mode: "portfolio",
+                  title:
+                    editingForm.title[activeLocale] ||
+                    editingForm.title.pt ||
+                    editingForm.title.fr ||
+                    "Título da História",
+                  location:
+                    editingForm.location[activeLocale] ||
+                    editingForm.location.pt ||
+                    editingForm.location.fr ||
+                    "Paris · France",
+                  camera: editingForm.camera,
+                  aspectClass: editingForm.aspectClass,
+                  colSpan: editingForm.colSpan,
+                  onAspectClassChange: (nextAspect) =>
+                    setEditingForm({ ...editingForm, aspectClass: nextAspect }),
+                  onColSpanChange: (nextColSpan) =>
+                    setEditingForm({ ...editingForm, colSpan: nextColSpan }),
+                }}
                 onImageChange={(url, pathname) =>
                   setEditingForm((prev) => {
                     if (!prev) return prev;

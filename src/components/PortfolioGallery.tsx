@@ -8,6 +8,7 @@ import {
   legacyObjectPositionToFocalPoint,
   type CmsPortfolioProject,
 } from "@/lib/cms/types";
+import { getFramedImageStyle } from "@/lib/cms/framing";
 import { LightboxModal } from "./LightboxModal";
 
 interface PortfolioGalleryProps {
@@ -130,16 +131,18 @@ export function PortfolioGallery({ projects }: PortfolioGalleryProps) {
                 <div
                   className={`relative w-full ${aspectClass} overflow-hidden bg-[#FAF9F6]`}
                 >
-                  <Image
-                    src={project.coverImage}
-                    alt={project.title[locale]}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
-                    loading="lazy"
-                    style={{ objectPosition: focalPoint }}
-                    className="object-cover transition-transform duration-1000 ease-out group-hover:scale-[1.03]"
-                    quality={90}
-                  />
+                  <div className="relative w-full h-full transition-transform duration-1000 ease-out group-hover:scale-[1.03]">
+                    <Image
+                      src={project.coverImage}
+                      alt={project.title[locale]}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
+                      loading="lazy"
+                      style={getFramedImageStyle(focalPoint)}
+                      className="object-cover"
+                      quality={90}
+                    />
+                  </div>
                   {/* Gentle hover shimmer */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/8 transition-colors duration-500" />
                 </div>

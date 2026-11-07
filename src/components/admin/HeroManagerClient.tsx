@@ -24,6 +24,10 @@ import {
 import { SortableList, DragHandleButton } from "./SortableList";
 import { ImageUploaderWithFocalPoint } from "./ImageUploaderWithFocalPoint";
 import { LocaleTabs } from "./LocaleTabs";
+import {
+  formatFramingSummary,
+  getFramedImageStyle,
+} from "@/lib/cms/framing";
 
 interface HeroManagerClientProps {
   initialSlides: HeroSlideData[];
@@ -281,7 +285,7 @@ export function HeroManagerClient({ initialSlides }: HeroManagerClientProps) {
                   alt={slide.title.pt || slide.title.fr}
                   fill
                   sizes="110px"
-                  style={{ objectPosition: slide.focalPoint || "50% 0%" }}
+                  style={getFramedImageStyle(slide.focalPoint)}
                   className="object-cover"
                   quality={75}
                 />
@@ -293,7 +297,7 @@ export function HeroManagerClient({ initialSlides }: HeroManagerClientProps) {
                     {slide.tag}
                   </span>
                   <span className="text-[9px] uppercase tracking-[0.2em] text-[#9C968F]">
-                    Foco: {slide.focalPoint}
+                    Foco: {formatFramingSummary(slide.focalPoint)}
                   </span>
                   {!slide.isVisible && (
                     <span className="text-[9px] uppercase tracking-[0.2em] px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200">
@@ -375,7 +379,7 @@ export function HeroManagerClient({ initialSlides }: HeroManagerClientProps) {
           aria-modal="true"
           className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
         >
-          <div className="bg-white border border-[#E5E1DA] w-full max-w-3xl max-h-[92vh] overflow-y-auto p-6 sm:p-9 shadow-2xl space-y-6">
+          <div className="bg-white border border-[#E5E1DA] w-full max-w-5xl max-h-[92vh] overflow-y-auto p-6 sm:p-9 shadow-2xl space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-[#EFECE6]">
               <div>
                 <p className="text-[9px] uppercase tracking-[0.3em] text-[#9E8765]">
@@ -404,7 +408,17 @@ export function HeroManagerClient({ initialSlides }: HeroManagerClientProps) {
                     ? "aspect-[3/2]"
                     : "aspect-[4/5]"
                 }
-                helperText="No computador a foto inteira é preservada com fundo atmosférico; no celular ela preenche 100% da tela vertical seguindo o Ponto Focal marcado abaixo."
+                helperText="Arraste a foto no quadro, ajuste o zoom e escolha se no Computador prefere exibir a foto inteira com atmosfera ou preencher a tela cheia."
+                previewContext={{
+                  mode: "hero",
+                  tag: editingForm.tag,
+                  captionTitle:
+                    editingForm.titlePt ||
+                    editingForm.titleFr ||
+                    editingForm.titleEn ||
+                    "Legenda do Slide",
+                  slideNumberLabel: `01 — ${String(Math.max(slides.length, 1)).padStart(2, "0")}`,
+                }}
                 onImageChange={(url, pathname) =>
                   setEditingForm({
                     ...editingForm,
