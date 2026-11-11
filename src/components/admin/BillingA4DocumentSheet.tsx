@@ -80,7 +80,7 @@ export function BillingA4DocumentSheet({
       className={`billing-a4-sheet bg-white text-[#181716] relative flex flex-col justify-between mx-auto select-text ${
         printMode
           ? "w-[210mm] h-[297mm] p-[12mm_16mm_10mm_16mm] shadow-none overflow-hidden"
-          : "w-[210mm] min-h-[297mm] p-[12mm_16mm_10mm_16mm] shadow-[0_20px_60px_rgba(24,23,22,0.14)] border border-[#E5E1DA]"
+          : "w-[794px] h-[1123px] p-[45px_60px_38px_60px] shadow-[0_20px_60px_rgba(24,23,22,0.16)] border border-[#E5E1DA] overflow-hidden"
       }`}
       style={{
         fontFamily: "var(--font-sans), Plus Jakarta Sans, sans-serif",
