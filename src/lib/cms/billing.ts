@@ -53,41 +53,6 @@ export interface BillingDashboardSummary {
   };
 }
 
-export const DEFAULT_BILLING_SETTINGS: BillingDefaultSettingsJson = {
-  atelierTag: "Atelier de Photographie Fine Art",
-  brandName: "Kennedy Wanderson",
-  brandSubtitle: "Mariages · Éditorial · Portraits · France & International",
-  emitterName: "Kennedy Wanderson",
-  emitterRole: "Photographe Auteur & Reportage Mariage",
-  emitterLocation: "Paris & Île-de-France · Déplacements France & Europe",
-  emitterEmail: "E-mail : contact@kennedywanderson.com",
-  emitterWebsite: "Portfolio : www.kennedywanderson.com",
-  emitterPhone: "",
-  emitterLegalLine:
-    "Entrepreneur Individuel · SIRET : 912 345 678 00019 · APE : 74.20Z",
-  bankHolder: "KENNEDY WANDERSON",
-  bankName: "QONTO / BNP PARIBAS PARIS",
-  bankIban: "FR76 1695 8000 0145 8923 7410 562",
-  bankBic: "QNTOFRP1XXX",
-  currencySymbol: "€",
-  defaultTaxRate: 0,
-  defaultTaxNotice:
-    "TVA non applicable, art. 293 B du Code général des impôts (CGI).",
-  defaultDepositPercent: 30,
-  defaultInvoiceFooter1:
-    "KENNEDY WANDERSON — PHOTOGRAPHE FINE ART · Paris, France · SIRET : 912 345 678 00019 · Dispensé d'immatriculation au RCS/RM",
-  defaultInvoiceFooter2:
-    "En cas de retard de paiement, une pénalité égale à 3 fois le taux d'intérêt légal sera exigible (Art. L441-10 du Code de commerce), ainsi qu'une indemnité forfaitaire pour frais de recouvrement de 40 € (Art. D441-5 du Code de commerce). Pas d'escompte pour paiement anticipé.",
-  defaultDevisFooter1:
-    "KENNEDY WANDERSON — PHOTOGRAPHE FINE ART · Paris, France · SIRET : 912 345 678 00019 · contact@kennedywanderson.com",
-  defaultDevisFooter2:
-    "Devis gratuit. La réservation de la date devient ferme et définitive à réception du présent devis signé et du versement de l'acompte de 30 %.",
-  invoicePrefix: "FAC",
-  devisPrefix: "DEV",
-  nextInvoiceSeq: 15,
-  nextDevisSeq: 29,
-};
-
 export const PHOTOGRAPHY_SERVICE_PRESETS: Array<Omit<BillingLineItem, "id">> = [
   {
     title:
@@ -147,6 +112,42 @@ export const PHOTOGRAPHY_SERVICE_PRESETS: Array<Omit<BillingLineItem, "id">> = [
     unitPrice: 0,
   },
 ];
+
+export const DEFAULT_BILLING_SETTINGS: BillingDefaultSettingsJson = {
+  atelierTag: "Atelier de Photographie Fine Art",
+  brandName: "Kennedy Wanderson",
+  brandSubtitle: "Mariages · Éditorial · Portraits · France & International",
+  emitterName: "Kennedy Wanderson",
+  emitterRole: "Photographe Auteur & Reportage Mariage",
+  emitterLocation: "Paris & Île-de-France · Déplacements France & Europe",
+  emitterEmail: "E-mail : contact@kennedywanderson.com",
+  emitterWebsite: "Portfolio : www.kennedywanderson.com",
+  emitterPhone: "",
+  emitterLegalLine:
+    "Entrepreneur Individuel · SIRET : 912 345 678 00019 · APE : 74.20Z",
+  bankHolder: "KENNEDY WANDERSON",
+  bankName: "QONTO / BNP PARIBAS PARIS",
+  bankIban: "FR76 1695 8000 0145 8923 7410 562",
+  bankBic: "QNTOFRP1XXX",
+  currencySymbol: "€",
+  defaultTaxRate: 0,
+  defaultTaxNotice:
+    "TVA non applicable, art. 293 B du Code général des impôts (CGI).",
+  defaultDepositPercent: 30,
+  defaultInvoiceFooter1:
+    "KENNEDY WANDERSON — PHOTOGRAPHE FINE ART · Paris, France · SIRET : 912 345 678 00019 · Dispensé d'immatriculation au RCS/RM",
+  defaultInvoiceFooter2:
+    "En cas de retard de paiement, une pénalité égale à 3 fois le taux d'intérêt légal sera exigible (Art. L441-10 du Code de commerce), ainsi qu'une indemnité forfaitaire pour frais de recouvrement de 40 € (Art. D441-5 du Code de commerce). Pas d'escompte pour paiement anticipé.",
+  defaultDevisFooter1:
+    "KENNEDY WANDERSON — PHOTOGRAPHE FINE ART · Paris, France · SIRET : 912 345 678 00019 · contact@kennedywanderson.com",
+  defaultDevisFooter2:
+    "Devis gratuit. La réservation de la date devient ferme et définitive à réception du présent devis signé et du versement de l'acompte de 30 %.",
+  invoicePrefix: "FAC",
+  devisPrefix: "DEV",
+  nextInvoiceSeq: 15,
+  nextDevisSeq: 29,
+  servicePresets: PHOTOGRAPHY_SERVICE_PRESETS,
+};
 
 export function formatFrenchDate(dateInput?: Date): string {
   const d = dateInput || new Date();
@@ -771,8 +772,17 @@ export async function getBillingDashboardData(): Promise<BillingDashboardSummary
         .orderBy(desc(schema.billingDocuments.createdAt)),
     ]);
 
-    const settings: BillingDefaultSettingsJson = settingsRows[0]?.settingsJson
-      ? { ...DEFAULT_BILLING_SETTINGS, ...settingsRows[0].settingsJson }
+    const rawSettings = settingsRows[0]?.settingsJson;
+    const settings: BillingDefaultSettingsJson = rawSettings
+      ? {
+          ...DEFAULT_BILLING_SETTINGS,
+          ...rawSettings,
+          servicePresets:
+            Array.isArray(rawSettings.servicePresets) &&
+            rawSettings.servicePresets.length > 0
+              ? rawSettings.servicePresets
+              : PHOTOGRAPHY_SERVICE_PRESETS,
+        }
       : DEFAULT_BILLING_SETTINGS;
 
     const documents = docRows.map(mapRowToBillingDocument);

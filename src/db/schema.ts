@@ -387,6 +387,7 @@ export interface BillingDefaultSettingsJson {
   devisPrefix: string;
   nextInvoiceSeq: number;
   nextDevisSeq: number;
+  servicePresets?: Array<Omit<BillingLineItem, "id">>;
 }
 
 export const billingSettings = pgTable("billing_settings", {

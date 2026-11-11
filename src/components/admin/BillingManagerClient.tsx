@@ -387,6 +387,12 @@ export function BillingManagerClient({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [lastEditedLabel, setLastEditedLabel] = useState<string>("");
   const [fullscreenPreviewOpen, setFullscreenPreviewOpen] = useState(false);
+  const [editingPresetsOpen, setEditingPresetsOpen] = useState(false);
+
+  const activeServicePresets =
+    settings.servicePresets && settings.servicePresets.length > 0
+      ? settings.servicePresets
+      : PHOTOGRAPHY_SERVICE_PRESETS;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -429,10 +435,15 @@ export function BillingManagerClient({
       metaCol3Value: inquiry?.eventLocation || "France",
     });
 
+    const firstPreset =
+      settings.servicePresets && settings.servicePresets.length > 0
+        ? settings.servicePresets[0]
+        : PHOTOGRAPHY_SERVICE_PRESETS[0];
+
     const defaultItems: BillingLineItem[] = [
       {
         id: "item-default-1",
-        ...PHOTOGRAPHY_SERVICE_PRESETS[0],
+        ...firstPreset,
       },
     ];
 
@@ -659,6 +670,116 @@ export function BillingManagerClient({
           ? prev.items.filter((i) => i.id !== id)
           : prev.items,
     }));
+  };
+
+  // Service & Package Presets Catalog Management (saved in billingSettings)
+  const handleUpdatePresetItem = (
+    index: number,
+    patch: Partial<Omit<BillingLineItem, "id">>
+  ) => {
+    setSettings((prev) => {
+      const current =
+        prev.servicePresets && prev.servicePresets.length > 0
+          ? [...prev.servicePresets]
+          : [...PHOTOGRAPHY_SERVICE_PRESETS];
+      if (!current[index]) return prev;
+      current[index] = { ...current[index], ...patch };
+      return { ...prev, servicePresets: current };
+    });
+  };
+
+  const handleAddPresetItem = () => {
+    setSettings((prev) => {
+      const current =
+        prev.servicePresets && prev.servicePresets.length > 0
+          ? [...prev.servicePresets]
+          : [...PHOTOGRAPHY_SERVICE_PRESETS];
+      const nextPreset: Omit<BillingLineItem, "id"> = {
+        title: "Nouvelle Collection / Prestation — Sur Mesure",
+        description:
+          "Description complète de votre forfait ou prestation photographique...",
+        quantityLabel: "1 Forfait",
+        quantity: 1,
+        unitPrice: 950,
+      };
+      return { ...prev, servicePresets: [...current, nextPreset] };
+    });
+  };
+
+  const handleRemovePresetItem = (index: number) => {
+    setSettings((prev) => {
+      const current =
+        prev.servicePresets && prev.servicePresets.length > 0
+          ? [...prev.servicePresets]
+          : [...PHOTOGRAPHY_SERVICE_PRESETS];
+      if (current.length <= 1) return prev;
+      return {
+        ...prev,
+        servicePresets: current.filter((_, idx) => idx !== index),
+      };
+    });
+  };
+
+  const handleMovePresetItem = (index: number, direction: -1 | 1) => {
+    setSettings((prev) => {
+      const current =
+        prev.servicePresets && prev.servicePresets.length > 0
+          ? [...prev.servicePresets]
+          : [...PHOTOGRAPHY_SERVICE_PRESETS];
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= current.length) return prev;
+      const temp = current[index];
+      current[index] = current[targetIndex];
+      current[targetIndex] = temp;
+      return { ...prev, servicePresets: current };
+    });
+  };
+
+  const handleResetPresetItems = () => {
+    const nextSettings: BillingDefaultSettingsJson = {
+      ...settings,
+      servicePresets: PHOTOGRAPHY_SERVICE_PRESETS.map((p) => ({ ...p })),
+    };
+    setSettings(nextSettings);
+    startTransition(async () => {
+      await saveBillingSettingsAction(nextSettings);
+      showToast("Pacotes rápidos restaurados para as sugestões originais!");
+      router.refresh();
+    });
+  };
+
+  const handleSavePresetsCatalog = () => {
+    startTransition(async () => {
+      await saveBillingSettingsAction(settings);
+      showToast("Meus Pacotes Rápidos salvos com sucesso!");
+      router.refresh();
+    });
+  };
+
+  const handleSaveLineItemAsPreset = (item: BillingLineItem) => {
+    const current =
+      settings.servicePresets && settings.servicePresets.length > 0
+        ? [...settings.servicePresets]
+        : [...PHOTOGRAPHY_SERVICE_PRESETS];
+    const newPreset: Omit<BillingLineItem, "id"> = {
+      title: item.title,
+      description: item.description,
+      quantityLabel: item.quantityLabel,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    };
+    const nextSettings: BillingDefaultSettingsJson = {
+      ...settings,
+      servicePresets: [...current, newPreset],
+    };
+    setSettings(nextSettings);
+    startTransition(async () => {
+      await saveBillingSettingsAction(nextSettings);
+      showToast(
+        `"${item.title.split("—")[0].trim()}" adicionado aos seus Pacotes Rápidos!`
+      );
+      router.refresh();
+    });
   };
 
   // Save Document Action
@@ -1945,24 +2066,270 @@ export function BillingManagerClient({
                                 </div>
                               </div>
 
-                              {/* Quick Preset Packages */}
-                              <div>
-                                <p className="text-[9px] uppercase tracking-[0.2em] text-[#6B6660] mb-1.5">
-                                  Inserir Pacote Rápido (1 Clique):
-                                </p>
+                              {/* Quick Preset Packages + Custom Package Catalog Editor */}
+                              <div className="p-3 bg-[#FAF9F6] border border-[#E5E1DA] space-y-3">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <div>
+                                    <p className="text-[9px] uppercase tracking-[0.2em] text-[#181716] font-semibold">
+                                      Inserir Pacote Rápido (1 Clique)
+                                    </p>
+                                    <p className="text-[10px] text-[#6B6660]">
+                                      Clique para adicionar à fatura ou personalize suas opções favoritas
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setEditingPresetsOpen(!editingPresetsOpen)
+                                    }
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[9px] uppercase tracking-[0.18em] border transition-colors cursor-pointer ${
+                                      editingPresetsOpen
+                                        ? "bg-[#181716] text-white border-[#181716]"
+                                        : "bg-white text-[#181716] border-[#9E8765] hover:bg-[#181716] hover:text-white"
+                                    }`}
+                                  >
+                                    <Settings2 size={11} />
+                                    <span>
+                                      {editingPresetsOpen
+                                        ? "Fechar Editor de Pacotes"
+                                        : "Editar Meus Pacotes"}
+                                    </span>
+                                  </button>
+                                </div>
+
                                 <div className="flex flex-wrap gap-1.5">
-                                  {PHOTOGRAPHY_SERVICE_PRESETS.map((p, i) => (
+                                  {activeServicePresets.map((p, i) => (
                                     <button
                                       key={i}
                                       type="button"
                                       onClick={() => handleAddLineItem(p)}
-                                      className="px-2.5 py-1 text-[10px] bg-[#FAF9F6] hover:bg-[#181716] hover:text-white border border-[#D8D3CB] transition-colors cursor-pointer"
+                                      className="px-2.5 py-1.5 text-[10px] bg-white hover:bg-[#181716] hover:text-white border border-[#D8D3CB] transition-colors cursor-pointer shadow-2xs"
                                     >
                                       + {p.title.split("—")[0].trim()} (
-                                      {p.unitPrice} €)
+                                      {p.unitPrice}{" "}
+                                      {
+                                        editorState.documentConfig
+                                          .currencySymbol
+                                      }
+                                      )
                                     </button>
                                   ))}
                                 </div>
+
+                                {/* Expandable Custom Package Presets Manager */}
+                                {editingPresetsOpen && (
+                                  <div className="pt-3 mt-2 border-t border-[#DFDBD2] space-y-3">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap bg-[#F2EFE9] px-3 py-2 border-l-2 border-[#9E8765]">
+                                      <div>
+                                        <p className="text-[9px] uppercase tracking-[0.22em] text-[#181716] font-semibold">
+                                          Catálogo de Pacotes & Serviços Preferidos
+                                        </p>
+                                        <p className="text-[10px] text-[#6B6660]">
+                                          Edite os títulos, descrições e valores abaixo. Ao clicar em &ldquo;Salvar Meus Pacotes&rdquo;, estas opções ficarão gravadas como seus botões padrão.
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                                      {activeServicePresets.map(
+                                        (preset, pIdx) => (
+                                          <div
+                                            key={pIdx}
+                                            className="p-3 bg-white border border-[#D8D3CB] space-y-2"
+                                          >
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-[9px] uppercase tracking-[0.2em] text-[#9E8765] font-semibold">
+                                                 Botão Rápido #{pIdx + 1}
+                                              </span>
+                                              <div className="flex items-center gap-1">
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    handleMovePresetItem(
+                                                      pIdx,
+                                                      -1
+                                                    )
+                                                  }
+                                                  disabled={pIdx === 0}
+                                                  title="Mover para cima"
+                                                  className="p-1 border border-[#D8D3CB] bg-[#FAF9F6] disabled:opacity-30 cursor-pointer"
+                                                >
+                                                  <ChevronUp size={11} />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    handleMovePresetItem(
+                                                      pIdx,
+                                                      1
+                                                    )
+                                                  }
+                                                  disabled={
+                                                    pIdx ===
+                                                    activeServicePresets.length -
+                                                      1
+                                                  }
+                                                  title="Mover para baixo"
+                                                  className="p-1 border border-[#D8D3CB] bg-[#FAF9F6] disabled:opacity-30 cursor-pointer"
+                                                >
+                                                  <ChevronDown size={11} />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() =>
+                                                    handleRemovePresetItem(pIdx)
+                                                  }
+                                                  disabled={
+                                                    activeServicePresets.length <=
+                                                    1
+                                                  }
+                                                  title="Excluir pacote rápido"
+                                                  className="p-1 border border-[#D8D3CB] bg-[#FAF9F6] text-red-700 disabled:opacity-30 cursor-pointer"
+                                                >
+                                                  <Trash2 size={11} />
+                                                </button>
+                                              </div>
+                                            </div>
+
+                                            <div>
+                                              <label className="block text-[8px] uppercase tracking-[0.18em] text-[#6B6660] mb-0.5">
+                                                Nome do Pacote / Serviço (use &ldquo;—&rdquo; para subtítulo opcional)
+                                              </label>
+                                              <input
+                                                type="text"
+                                                value={preset.title}
+                                                onChange={(e) =>
+                                                  handleUpdatePresetItem(pIdx, {
+                                                    title: e.target.value,
+                                                  })
+                                                }
+                                                className="w-full border border-[#D8D3CB] bg-[#FAF9F6] px-2.5 py-1.5 text-xs font-medium"
+                                              />
+                                            </div>
+
+                                            <div>
+                                              <label className="block text-[8px] uppercase tracking-[0.18em] text-[#6B6660] mb-0.5">
+                                                Descrição Padrão do Pacote
+                                              </label>
+                                              <textarea
+                                                rows={2}
+                                                value={preset.description}
+                                                onChange={(e) =>
+                                                  handleUpdatePresetItem(pIdx, {
+                                                    description: e.target.value,
+                                                  })
+                                                }
+                                                className="w-full border border-[#D8D3CB] bg-[#FAF9F6] px-2.5 py-1.5 text-xs"
+                                              />
+                                            </div>
+
+                                            <div className="grid grid-cols-3 gap-2">
+                                              <div>
+                                                <label className="block text-[8px] uppercase tracking-[0.18em] text-[#6B6660] mb-0.5">
+                                                  Texto Qtd
+                                                </label>
+                                                <input
+                                                  type="text"
+                                                  value={preset.quantityLabel}
+                                                  onChange={(e) =>
+                                                    handleUpdatePresetItem(
+                                                      pIdx,
+                                                      {
+                                                        quantityLabel:
+                                                          e.target.value,
+                                                      }
+                                                    )
+                                                  }
+                                                  className="w-full border border-[#D8D3CB] bg-[#FAF9F6] px-2 py-1 text-xs"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-[8px] uppercase tracking-[0.18em] text-[#6B6660] mb-0.5">
+                                                  Multiplicador
+                                                </label>
+                                                <input
+                                                  type="number"
+                                                  step="0.5"
+                                                  min="0"
+                                                  value={preset.quantity}
+                                                  onChange={(e) =>
+                                                    handleUpdatePresetItem(
+                                                      pIdx,
+                                                      {
+                                                        quantity:
+                                                          parseFloat(
+                                                            e.target.value
+                                                          ) || 1,
+                                                      }
+                                                    )
+                                                  }
+                                                  className="w-full border border-[#D8D3CB] bg-[#FAF9F6] px-2 py-1 text-xs"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-[8px] uppercase tracking-[0.18em] text-[#6B6660] mb-0.5">
+                                                  Preço Padrão (
+                                                  {
+                                                    editorState.documentConfig
+                                                      .currencySymbol
+                                                  }
+                                                  )
+                                                </label>
+                                                <input
+                                                  type="number"
+                                                  step="10"
+                                                  value={preset.unitPrice}
+                                                  onChange={(e) =>
+                                                    handleUpdatePresetItem(
+                                                      pIdx,
+                                                      {
+                                                        unitPrice:
+                                                          parseFloat(
+                                                            e.target.value
+                                                          ) || 0,
+                                                      }
+                                                    )
+                                                  }
+                                                  className="w-full border border-[#D8D3CB] bg-[#FAF9F6] px-2 py-1 text-xs font-medium"
+                                                />
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={handleAddPresetItem}
+                                          className="inline-flex items-center gap-1 px-3 py-1.5 border border-dashed border-[#9E8765] bg-white hover:bg-[#F6F3EE] text-[#181716] text-[9px] uppercase tracking-[0.18em] cursor-pointer"
+                                        >
+                                          <Plus size={11} />
+                                          <span>Novo Pacote Favorito</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={handleResetPresetItems}
+                                          className="px-2.5 py-1.5 border border-[#D8D3CB] bg-white hover:bg-[#F2EFE9] text-[#6B6660] text-[9px] uppercase tracking-[0.16em] cursor-pointer"
+                                        >
+                                          Restaurar Sugestões
+                                        </button>
+                                      </div>
+
+                                      <button
+                                        type="button"
+                                        onClick={handleSavePresetsCatalog}
+                                        disabled={isPending}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#181716] text-white hover:bg-[#9E8765] text-[9px] uppercase tracking-[0.2em] transition-colors cursor-pointer"
+                                      >
+                                        <Save size={12} />
+                                        <span>Salvar Meus Pacotes</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
 
                               {/* Individual Items List */}
@@ -1972,11 +2339,22 @@ export function BillingManagerClient({
                                     key={item.id}
                                     className="p-3.5 border border-[#D8D3CB] bg-[#FAF9F6] space-y-2.5"
                                   >
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
                                       <span className="text-[9px] uppercase tracking-[0.22em] text-[#9E8765] font-semibold">
-                                        Item #{idx + 1}
+                                        Item #{idx + 1} no Documento
                                       </span>
                                       <div className="flex items-center gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleSaveLineItemAsPreset(item)
+                                          }
+                                          title="Salvar este serviço como um botão de pacote rápido para próximas faturas"
+                                          className="inline-flex items-center gap-1 px-2 py-1 border border-[#D8D3CB] bg-white hover:border-[#9E8765] hover:text-[#9E8765] text-[8px] uppercase tracking-[0.16em] transition-colors cursor-pointer mr-1"
+                                        >
+                                          <Sparkles size={10} />
+                                          <span>Salvar nos Pacotes</span>
+                                        </button>
                                         <button
                                           type="button"
                                           onClick={() =>
@@ -3316,6 +3694,29 @@ export function BillingManagerClient({
                     className="w-full border border-[#D8D3CB] px-2.5 py-2 text-xs"
                   />
                 </div>
+              </div>
+
+              <div className="pt-4 border-t border-[#F2EFE9] flex items-center justify-between gap-3 bg-[#FAF9F6] p-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-[#181716] font-semibold">
+                    Pacotes & Serviços Fotográficos Favoritos (
+                    {activeServicePresets.length})
+                  </p>
+                  <p className="text-[11px] text-[#6B6660]">
+                    Personalize os botões de 1 clique da Seção 04 com seus próprios pacotes e preços.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("editor");
+                    setActiveZone("items");
+                    setEditingPresetsOpen(true);
+                  }}
+                  className="px-3 py-2 border border-[#9E8765] bg-white hover:bg-[#181716] hover:text-white text-[9px] uppercase tracking-[0.18em] transition-colors cursor-pointer shrink-0"
+                >
+                  Editar Meus Pacotes
+                </button>
               </div>
 
               <div className="pt-4 flex justify-end">
