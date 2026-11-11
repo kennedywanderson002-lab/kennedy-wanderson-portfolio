@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Mail,
@@ -13,6 +14,7 @@ import {
   Trash2,
   X,
   Inbox,
+  ReceiptText,
 } from "lucide-react";
 import type { CmsInquiryItem } from "@/lib/cms/types";
 import {
@@ -186,6 +188,28 @@ export function InquiriesInboxClient({
 
                   {/* Direct Reply Buttons */}
                   <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/admin/billing?fromInquiry=1&inquiryId=${encodeURIComponent(
+                        item.id
+                      )}&clientName=${encodeURIComponent(
+                        item.fullName
+                      )}&clientEmail=${encodeURIComponent(
+                        item.email
+                      )}&clientPhone=${encodeURIComponent(
+                        item.phone || ""
+                      )}&eventDate=${encodeURIComponent(
+                        item.eventDate
+                      )}&eventLocation=${encodeURIComponent(
+                        item.destination || ""
+                      )}&guestCount=${encodeURIComponent(
+                        item.guestCount || ""
+                      )}&docType=devis`}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#9E8765] text-white hover:bg-[#181716] text-[10px] uppercase tracking-[0.2em] transition-colors"
+                    >
+                      <ReceiptText size={13} />
+                      <span>Gerar Devis / Fatura</span>
+                    </Link>
+
                     <a
                       href={`mailto:${item.email}?subject=${encodeURIComponent(
                         `Kennedy Wanderson Photography · ${item.eventDate}`

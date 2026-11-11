@@ -11,7 +11,20 @@ import { defaultHeroSlides } from "@/data/hero";
 import { portfolioProjects as defaultProjects } from "@/data/portfolio";
 import { translations as defaultTranslations } from "@/data/translations";
 import { legacyObjectPositionToFocalPoint } from "./types";
-import type { DeepPartialTranslations } from "@/db/schema";
+import type {
+  BillingDefaultSettingsJson,
+  BillingDocumentConfig,
+  BillingLineItem,
+  DeepPartialTranslations,
+} from "@/db/schema";
+import {
+  buildDefaultDocumentConfig,
+  calculateBillingTotals,
+  DEFAULT_BILLING_SETTINGS,
+  ensureBillingTables,
+  type BillingDocStatus,
+  type BillingDocType,
+} from "./billing";
 
 function generateId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -772,4 +785,310 @@ export async function changeAdminPasswordAction(
 
   return { ok: true };
 }
+
+// ==========================================================
+// 6. BILLING / FACTURES & DEVIS ACTIONS
+// ==========================================================
+
+export async function saveBillingSettingsAction(
+  settingsInput: BillingDefaultSettingsJson
+) {
+  await requireAdmin();
+  await ensureBillingTables();
+  const db = getDb();
+
+  const existing = await db
+    .select()
+    .from(schema.billingSettings)
+    .where(eq(schema.billingSettings.id, "main"));
+
+  if (existing.length > 0) {
+    await db
+      .update(schema.billingSettings)
+      .set({
+        settingsJson: settingsInput,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.billingSettings.id, "main"));
+  } else {
+    await db.insert(schema.billingSettings).values({
+      id: "main",
+      settingsJson: settingsInput,
+    });
+  }
+
+  return { ok: true };
+}
+
+export interface SaveBillingDocumentInput {
+  id?: string;
+  docType: BillingDocType;
+  docNumber: string;
+  status: BillingDocStatus;
+  inquiryId?: string;
+  clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  eventDate?: string;
+  eventLocation?: string;
+  discountAmount?: number; // in euros
+  taxRate?: number; // percentage
+  fixedDepositAmount?: number; // in euros when depositMode === 'fixed'
+  items: BillingLineItem[];
+  documentConfig: BillingDocumentConfig;
+  notes?: string;
+}
+
+export async function saveBillingDocumentAction(
+  input: SaveBillingDocumentInput
+) {
+  await requireAdmin();
+  await ensureBillingTables();
+  const db = getDb();
+
+  const totals = calculateBillingTotals(
+    input.items,
+    input.discountAmount || 0,
+    input.taxRate || 0,
+    input.documentConfig,
+    input.fixedDepositAmount
+  );
+
+  const subtotalCents = Math.round(totals.subtotal * 100);
+  const discountCents = Math.round(totals.discountAmount * 100);
+  const taxRateBp = Math.round((input.taxRate || 0) * 100);
+  const taxCents = Math.round(totals.taxAmount * 100);
+  const totalCents = Math.round(totals.totalAmount * 100);
+  const depositCents = Math.round(totals.depositAmount * 100);
+  const balanceCents = Math.round(totals.balanceDue * 100);
+
+  if (input.id) {
+    const existing = await db
+      .select({ id: schema.billingDocuments.id })
+      .from(schema.billingDocuments)
+      .where(eq(schema.billingDocuments.id, input.id));
+
+    if (existing.length > 0) {
+      await db
+        .update(schema.billingDocuments)
+        .set({
+          docType: input.docType,
+          docNumber: input.docNumber.trim(),
+          status: input.status,
+          inquiryId: input.inquiryId || "",
+          clientName: input.clientName.trim(),
+          clientEmail: input.clientEmail || "",
+          clientPhone: input.clientPhone || "",
+          eventDate: input.eventDate || "",
+          eventLocation: input.eventLocation || "",
+          subtotal: subtotalCents,
+          discountAmount: discountCents,
+          taxRate: taxRateBp,
+          taxAmount: taxCents,
+          totalAmount: totalCents,
+          depositAmount: depositCents,
+          balanceDue: balanceCents,
+          items: input.items,
+          documentConfig: input.documentConfig,
+          notes: input.notes || "",
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.billingDocuments.id, input.id));
+
+      return { ok: true, id: input.id };
+    }
+  }
+
+  const newId = input.id || generateId(input.docType === "facture" ? "fac" : "dev");
+
+  await db.insert(schema.billingDocuments).values({
+    id: newId,
+    docType: input.docType,
+    docNumber: input.docNumber.trim(),
+    status: input.status,
+    inquiryId: input.inquiryId || "",
+    clientName: input.clientName.trim(),
+    clientEmail: input.clientEmail || "",
+    clientPhone: input.clientPhone || "",
+    eventDate: input.eventDate || "",
+    eventLocation: input.eventLocation || "",
+    subtotal: subtotalCents,
+    discountAmount: discountCents,
+    taxRate: taxRateBp,
+    taxAmount: taxCents,
+    totalAmount: totalCents,
+    depositAmount: depositCents,
+    balanceDue: balanceCents,
+    items: input.items,
+    documentConfig: input.documentConfig,
+    notes: input.notes || "",
+  });
+
+  // Advance sequence number in billing_settings if creating a new document
+  const settingsRows = await db
+    .select()
+    .from(schema.billingSettings)
+    .where(eq(schema.billingSettings.id, "main"));
+
+  if (settingsRows.length > 0) {
+    const s = { ...DEFAULT_BILLING_SETTINGS, ...settingsRows[0].settingsJson };
+    if (input.docType === "facture") {
+      s.nextInvoiceSeq = (s.nextInvoiceSeq || 1) + 1;
+    } else {
+      s.nextDevisSeq = (s.nextDevisSeq || 1) + 1;
+    }
+    await db
+      .update(schema.billingSettings)
+      .set({ settingsJson: s, updatedAt: new Date() })
+      .where(eq(schema.billingSettings.id, "main"));
+  }
+
+  return { ok: true, id: newId };
+}
+
+export async function updateBillingDocumentStatusAction(
+  id: string,
+  status: BillingDocStatus
+) {
+  await requireAdmin();
+  await ensureBillingTables();
+  const db = getDb();
+
+  await db
+    .update(schema.billingDocuments)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(schema.billingDocuments.id, id));
+
+  return { ok: true };
+}
+
+export async function deleteBillingDocumentAction(id: string) {
+  await requireAdmin();
+  await ensureBillingTables();
+  const db = getDb();
+
+  await db
+    .delete(schema.billingDocuments)
+    .where(eq(schema.billingDocuments.id, id));
+
+  return { ok: true };
+}
+
+export async function convertDevisToFactureAction(devisId: string) {
+  await requireAdmin();
+  await ensureBillingTables();
+  const db = getDb();
+
+  const rows = await db
+    .select()
+    .from(schema.billingDocuments)
+    .where(eq(schema.billingDocuments.id, devisId));
+
+  if (rows.length === 0) {
+    throw new Error("Devis não encontrado.");
+  }
+
+  const devis = rows[0];
+  const settingsRows = await db
+    .select()
+    .from(schema.billingSettings)
+    .where(eq(schema.billingSettings.id, "main"));
+
+  const settings: BillingDefaultSettingsJson = settingsRows[0]?.settingsJson
+    ? { ...DEFAULT_BILLING_SETTINGS, ...settingsRows[0].settingsJson }
+    : DEFAULT_BILLING_SETTINGS;
+
+  const year = new Date().getFullYear();
+  const seqStr = String(settings.nextInvoiceSeq || 1).padStart(3, "0");
+  const newFacNumber = `${settings.invoicePrefix || "FAC"}-${year}-${seqStr}`;
+
+  const oldCfg = devis.documentConfig;
+  const pct = oldCfg.depositPercent || settings.defaultDepositPercent || 30;
+
+  const newConfig = buildDefaultDocumentConfig("facture", newFacNumber, settings, {
+    atelierTag: oldCfg.atelierTag,
+    brandName: oldCfg.brandName,
+    brandSubtitle: oldCfg.brandSubtitle,
+    emitterName: oldCfg.emitterName,
+    emitterRole: oldCfg.emitterRole,
+    emitterLocation: oldCfg.emitterLocation,
+    emitterEmail: oldCfg.emitterEmail,
+    emitterWebsite: oldCfg.emitterWebsite,
+    emitterPhone: oldCfg.emitterPhone,
+    emitterLegalLine: oldCfg.emitterLegalLine,
+    clientAddressLine1: oldCfg.clientAddressLine1,
+    clientAddressLine2: oldCfg.clientAddressLine2,
+    clientEmailLine: oldCfg.clientEmailLine,
+    clientPhoneLine: oldCfg.clientPhoneLine,
+    clientExtraLine: oldCfg.clientExtraLine,
+    metaCol2Value: oldCfg.metaCol2Value,
+    metaCol3Value: oldCfg.metaCol3Value,
+    currencySymbol: oldCfg.currencySymbol,
+    bankHolder: oldCfg.bankHolder,
+    bankName: oldCfg.bankName,
+    bankIban: oldCfg.bankIban,
+    bankBic: oldCfg.bankBic,
+    showDiscount: oldCfg.showDiscount,
+    discountLabel: oldCfg.discountLabel,
+    depositPercent: pct,
+    showDeposit: true,
+    deductDepositFromTotal: true,
+    showBalanceDue: true,
+    showSignatures: false,
+  });
+
+  const items = Array.isArray(devis.items) ? devis.items : [];
+  const discountEuros = (devis.discountAmount || 0) / 100;
+  const taxRatePct = (devis.taxRate || 0) / 100;
+  const fixedDepEuros = (devis.depositAmount || 0) / 100;
+
+  const totals = calculateBillingTotals(
+    items,
+    discountEuros,
+    taxRatePct,
+    newConfig,
+    fixedDepEuros
+  );
+
+  const newFactureId = generateId("fac");
+
+  await db.insert(schema.billingDocuments).values({
+    id: newFactureId,
+    docType: "facture",
+    docNumber: newFacNumber,
+    status: "deposit_paid",
+    inquiryId: devis.inquiryId || "",
+    clientName: devis.clientName,
+    clientEmail: devis.clientEmail || "",
+    clientPhone: devis.clientPhone || "",
+    eventDate: devis.eventDate || "",
+    eventLocation: devis.eventLocation || "",
+    subtotal: Math.round(totals.subtotal * 100),
+    discountAmount: Math.round(totals.discountAmount * 100),
+    taxRate: devis.taxRate || 0,
+    taxAmount: Math.round(totals.taxAmount * 100),
+    totalAmount: Math.round(totals.totalAmount * 100),
+    depositAmount: Math.round(totals.depositAmount * 100),
+    balanceDue: Math.round(totals.balanceDue * 100),
+    items,
+    documentConfig: newConfig,
+    notes: `Convertida a partir do Devis ${devis.docNumber}`,
+  });
+
+  // Mark original Devis as accepted
+  await db
+    .update(schema.billingDocuments)
+    .set({ status: "accepted", updatedAt: new Date() })
+    .where(eq(schema.billingDocuments.id, devisId));
+
+  // Advance sequence counter
+  settings.nextInvoiceSeq = (settings.nextInvoiceSeq || 1) + 1;
+  await db
+    .update(schema.billingSettings)
+    .set({ settingsJson: settings, updatedAt: new Date() })
+    .where(eq(schema.billingSettings.id, "main"));
+
+  return { ok: true, id: newFactureId, docNumber: newFacNumber };
+}
+
 

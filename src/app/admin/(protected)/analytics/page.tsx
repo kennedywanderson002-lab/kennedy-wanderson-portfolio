@@ -26,3 +26,4 @@ export default async function AdminAnalyticsPage({
 
   return <AnalyticsDashboardClient summary={summary} />;
 }
+

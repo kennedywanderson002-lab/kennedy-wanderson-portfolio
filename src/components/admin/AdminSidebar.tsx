@@ -10,6 +10,7 @@ import {
   FolderKanban,
   FileText,
   Inbox,
+  ReceiptText,
   Settings,
   ExternalLink,
   LogOut,
@@ -47,6 +48,11 @@ const NAV_ITEMS = [
     label: "Orçamentos Recebidos",
     icon: Inbox,
     badgeKey: "inquiries",
+  },
+  {
+    href: "/admin/billing",
+    label: "Faturas & Devis (PDF)",
+    icon: ReceiptText,
   },
   {
     href: "/admin/settings",

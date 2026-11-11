@@ -267,4 +267,170 @@ export const siteAnalyticsEvents = pgTable(
   ]
 );
 
+// ==========================================================
+// 7. BILLING / FACTURES & DEVIS MODULE
+// ==========================================================
+
+export interface BillingLineItem {
+  id: string;
+  title: string;
+  description: string;
+  quantityLabel: string; // e.g. "1 Forfait", "1 Séance", "Offert"
+  quantity: number; // numeric multiplier
+  unitPrice: number; // unit price in euros/currency
+}
+
+export interface BillingDocumentConfig {
+  // Zone 1: Brand Header
+  atelierTag: string;
+  brandName: string;
+  brandSubtitle: string;
+  // Zone 2: Document Badge & Status
+  docBadgeLabel: string;
+  docNumberPrefix: string;
+  docStatusBadge: string;
+  // Zone 3: Emitter / Prestataire
+  emitterSectionLabel: string;
+  emitterName: string;
+  emitterRole: string;
+  emitterLocation: string;
+  emitterEmail: string;
+  emitterWebsite: string;
+  emitterPhone: string;
+  emitterLegalLine: string;
+  // Zone 4: Client / Facturé à
+  clientSectionLabel: string;
+  clientAddressLine1: string;
+  clientAddressLine2: string;
+  clientEmailLine: string;
+  clientPhoneLine: string;
+  clientExtraLine: string;
+  // Zone 5: 4-Column Event Strip
+  metaCol1Label: string;
+  metaCol1Value: string;
+  metaCol2Label: string;
+  metaCol2Value: string;
+  metaCol3Label: string;
+  metaCol3Value: string;
+  metaCol4Label: string;
+  metaCol4Value: string;
+  // Zone 6: Table Headers & Currency
+  tableColDesignation: string;
+  tableColQty: string;
+  tableColUnitPrice: string;
+  tableColTotal: string;
+  currencySymbol: string;
+  // Zone 7: Payment Box & SEPA Bank Details
+  paymentBoxTitle: string;
+  paymentIntroText: string;
+  showBankDetails: boolean;
+  bankLabelHolder: string;
+  bankHolder: string;
+  bankLabelBank: string;
+  bankName: string;
+  bankLabelIban: string;
+  bankIban: string;
+  bankLabelBic: string;
+  bankBic: string;
+  paymentConditionsText: string;
+  // Zone 8: Totals, Tax, Deposit & Balance
+  subtotalLabel: string;
+  showDiscount: boolean;
+  discountLabel: string;
+  taxLabel: string;
+  grandTotalLabel: string;
+  showDeposit: boolean;
+  depositLabel: string;
+  depositMode: "percent" | "fixed";
+  depositPercent: number;
+  deductDepositFromTotal: boolean;
+  showBalanceDue: boolean;
+  balanceDueLabel: string;
+  taxNoticeText: string;
+  // Zone 9: Signatures Block
+  showSignatures: boolean;
+  photographerSigTitle: string;
+  photographerSigSubtitle: string;
+  photographerSigName: string;
+  clientSigTitle: string;
+  clientSigSubtitle: string;
+  clientSigDatePrompt: string;
+  // Zone 10: Legal Footer
+  footerLine1: string;
+  footerLine2: string;
+}
+
+export interface BillingDefaultSettingsJson {
+  atelierTag: string;
+  brandName: string;
+  brandSubtitle: string;
+  emitterName: string;
+  emitterRole: string;
+  emitterLocation: string;
+  emitterEmail: string;
+  emitterWebsite: string;
+  emitterPhone: string;
+  emitterLegalLine: string;
+  bankHolder: string;
+  bankName: string;
+  bankIban: string;
+  bankBic: string;
+  currencySymbol: string;
+  defaultTaxRate: number;
+  defaultTaxNotice: string;
+  defaultDepositPercent: number;
+  defaultInvoiceFooter1: string;
+  defaultInvoiceFooter2: string;
+  defaultDevisFooter1: string;
+  defaultDevisFooter2: string;
+  invoicePrefix: string;
+  devisPrefix: string;
+  nextInvoiceSeq: number;
+  nextDevisSeq: number;
+}
+
+export const billingSettings = pgTable("billing_settings", {
+  id: text("id").primaryKey().default("main"),
+  settingsJson: jsonb("settings_json")
+    .$type<BillingDefaultSettingsJson>()
+    .notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const billingDocuments = pgTable(
+  "billing_documents",
+  {
+    id: text("id").primaryKey(),
+    docType: text("doc_type").notNull().default("devis"), // 'devis' | 'facture'
+    docNumber: text("doc_number").notNull(),
+    status: text("status").notNull().default("draft"), // 'draft' | 'sent' | 'accepted' | 'deposit_paid' | 'paid' | 'cancelled'
+    inquiryId: text("inquiry_id").default(""),
+    clientName: text("client_name").notNull(),
+    clientEmail: text("client_email").default(""),
+    clientPhone: text("client_phone").default(""),
+    eventDate: text("event_date").default(""),
+    eventLocation: text("event_location").default(""),
+    subtotal: integer("subtotal_cents").notNull().default(0),
+    discountAmount: integer("discount_cents").notNull().default(0),
+    taxRate: integer("tax_rate_bp").notNull().default(0), // basis points (e.g. 2000 = 20.00%)
+    taxAmount: integer("tax_cents").notNull().default(0),
+    totalAmount: integer("total_cents").notNull().default(0),
+    depositAmount: integer("deposit_cents").notNull().default(0),
+    balanceDue: integer("balance_cents").notNull().default(0),
+    items: jsonb("items").$type<BillingLineItem[]>().notNull(),
+    documentConfig: jsonb("document_config")
+      .$type<BillingDocumentConfig>()
+      .notNull(),
+    notes: text("notes").default(""),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("billing_docs_type_idx").on(table.docType),
+    index("billing_docs_status_idx").on(table.status),
+    index("billing_docs_created_idx").on(table.createdAt),
+  ]
+);
+
+
 

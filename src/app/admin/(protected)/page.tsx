@@ -6,21 +6,35 @@ import {
   FileText,
   Inbox,
   BarChart3,
+  ReceiptText,
   CheckCircle2,
   AlertCircle,
   ArrowRight,
 } from "lucide-react";
 import { getAdminOverviewStats } from "@/lib/cms/queries";
 import { getAdminAnalyticsDashboard } from "@/lib/cms/analytics";
+import { getBillingDashboardData, formatCurrencyFR } from "@/lib/cms/billing";
 import { SeedInitializerBanner } from "@/components/admin/SeedInitializerBanner";
 
 export default async function AdminDashboardPage() {
-  const [stats, analytics] = await Promise.all([
+  const [stats, analytics, billing] = await Promise.all([
     getAdminOverviewStats(),
     getAdminAnalyticsDashboard(30),
+    getBillingDashboardData(),
   ]);
 
   const cards = [
+    {
+      title: "Faturas & Devis (PDF A4)",
+      value: formatCurrencyFR(
+        billing.kpis.totalInvoiced,
+        billing.settings.currencySymbol
+      ),
+      subtitle: `${billing.documents.length} documentos · ${billing.kpis.openDevisCount} devis em aberto`,
+      href: "/admin/billing",
+      action: "Criar Fatura ou Devis em PDF",
+      icon: ReceiptText,
+    },
     {
       title: "Análise de Acessos (30d)",
       value: `${analytics.totalPageviews} visitas`,
